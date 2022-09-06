@@ -1,0 +1,13 @@
+**.mat
+**.asv
+**.h5
+**.hdf5
+**.csv
+**.pdf
+/paramID/impact_data
+/paramID/initial_states
+/paramID/results/
+/paramID/SimResults/
+/paramID/AGX_init_states/
+/performance/data
+
