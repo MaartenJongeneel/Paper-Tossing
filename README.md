@@ -53,7 +53,7 @@ The code in this repository can be split into two main parts. The first part foc
 
 <div align="center">
 <div style = "display: flex; align="center">
-<img src="figures/ExperimentalSetup.png" width="50%"/> 
+<img src="figures/ExperimentalSetup.PNG" width="50%"/> 
 </div>
 </div> 
 
