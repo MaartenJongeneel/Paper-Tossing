@@ -1,0 +1,3 @@
+Please place in this folder the data archives from the [database](https://impact-aware-robotics-database.tue.nl/):
+ - [I_AM_Archive_3_BoxDrops.h5](https://doi.org/10.4121/17122553/) : Raw data file containing box-drop experiments of Box003, Box004, and Box005.
+ - [I_AM_Archive_5_ParamID_Box006.h5](https://doi.org/10.4121/21024007) : Archive containing experiments for parameter identification of Box006 

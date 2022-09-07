@@ -17,7 +17,7 @@ Object = 'Box005';
 Environment = "Conveyor002";  %Select what conveyor you want to consider
 impact_data = "paramID/impact_data/220907_Box005_impacts.mat";
 AGXResult_h5file = "paramID/AGX_results/Box006_paramID/BoxImpactBox006_BoxTossBatch_result.hdf5";
-evalAlgoryx = false;
+evalAlgoryx = true;
 evalMatlab = true;
 evalMuJoCo = false;
 
@@ -38,6 +38,9 @@ doSave    = false;
 color.Green = [0.4660 0.6740 0.1880];
 color.Blue = [0 0.4470 0.7410];
 color.Red = [0.8500 0.3250 0.0980]; 
+color.GreenLight = [0.4660 0.6740 0.1880 0.5];
+color.BlueLight = [0 0.4470 0.7410 0.5];
+color.RedLight = [0.8500 0.3250 0.0980 0.5];
 color.Matlab = [31 62 77]/255;
 color.Algoryx = [187 123 59]/255;
 color.Meas = [135 134 132]/255;
@@ -500,7 +503,7 @@ if evalAlgoryx
     hm = plot(-5:5,BCV_CB(1:3,:),'linewidth',1); grid on; hold on;                           %Measurement
     hA = plot(k,BCV_MB_AGX(1:3,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');            %MATLAB data
     set(hm,{'color'},{[0.9290 0.6940 0.1250]; [0.4940 0.1840 0.5560]; [0.3010 0.7450 0.9330]})
-    set(hM,{'color'},{[0.9290 0.6940 0.1250]; [0.4940 0.1840 0.5560]; [0.3010 0.7450 0.9330]})
+    set(hA,{'color'},{[0.9290 0.6940 0.1250]; [0.4940 0.1840 0.5560]; [0.3010 0.7450 0.9330]})
     p = plot(-5:Ib,BCV_CBaf(1:3,1:indx_b)','-.','color','k','LineWidth',1);
     plot(Ic:5,BCV_CBef(1:3,indx_c:11)','-.','color','k','LineWidth',1);
     xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
@@ -509,9 +512,9 @@ if evalAlgoryx
     
     axes(ha(2));
     hm = plot(-5:5,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                          %Measurement
-    hM = plot(k,BCV_MB_AGX(4:6,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');           %MATLAB data
+    hA = plot(k,BCV_MB_AGX(4:6,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');           %MATLAB data
     set(hm,{'color'},{[0.9290 0.6940 0.1250]; [0.4940 0.1840 0.5560]; [0.3010 0.7450 0.9330]})
-    set(hM,{'color'},{[0.9290 0.6940 0.1250]; [0.4940 0.1840 0.5560]; [0.3010 0.7450 0.9330]})
+    set(hA,{'color'},{[0.9290 0.6940 0.1250]; [0.4940 0.1840 0.5560]; [0.3010 0.7450 0.9330]})
     plot(-5:Ib,BCV_CBaf(4:6,1:indx_b)','-.','color','k');
     plot(Ic:5,BCV_CBef(4:6,indx_c:11)','-.','color','k');
     xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
@@ -632,7 +635,7 @@ figure('rend','painters','pos',[pp{1,1} sizex sizey]);
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,'LaTeX/figures/CPVelocity_CentralEuler.pdf','-dpdf','-vector')
     end
-%%
+%% Paper figures
 
 %plot measured contact point velocities
 figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
@@ -718,6 +721,99 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
         fig_pos = fig.PaperPosition;
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,'MeasuredVelocities.pdf','-dpdf','-vector')
+    end
+
+
+%Combined plot Matlab results
+    figure('rend','painters','pos',[pp{3,3} sizex 1.8*sizey]);
+    ha = tight_subplot(2,1,[.08 .07],[.1 .12],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    hm = plot(-5:5,BCV_CB(1:3,:),'linewidth',1); grid on; hold on;                           %Measurement
+    hM = plot(k,BCV_MB_M(1:3,1:11,optMATLAB_idx),'linewidth',1,'LineStyle','--');            %MATLAB data
+    set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
+    set(hM,{'color'},{color.Red; color.Green; color.Blue})
+    p = plot(-5:Ib,BCV_CBaf(1:3,1:indx_b)','--','color','k','LineWidth',1.2);
+    plot(Ic:5,BCV_CBef(1:3,indx_c:11)','--','color','k','LineWidth',1.2);
+    xline(-5,'-.')
+    xline(indx_b-6,'-.')
+    xline(indx_c-6,'-.')
+    xline(5,'-.')
+    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
+    ha(1).XTick = k;
+    
+    axes(ha(2));
+    hm = plot(-5:5,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                          %Measurement
+    hM = plot(k,BCV_MB_M(4:6,1:11,optMATLAB_idx),'linewidth',1,'LineStyle','--');           %MATLAB data
+    set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
+    set(hM,{'color'},{color.Red; color.Green; color.Blue})
+    plot(-5:Ib,BCV_CBaf(4:6,1:indx_b)','--','color','k','LineWidth',1.2);
+    plot(Ic:5,BCV_CBef(4:6,indx_c:11)','--','color','k','LineWidth',1.2);
+    xline(-5,'-.')
+    xline(indx_b-6,'-.')
+    xline(indx_c-6,'-.')
+    xline(5,'-.')
+    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
+    ha(2).XTick = k;
+%     L1 = legend([hm(1) hm(2) hm(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','Fitted','NumColumns',4,'location','northeast');
+    L1 = legend([hm(1) hm(2) hm(3) hM(1) hM(2) hM(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','$x$-MATLAB','$y$-MATLAB','$z$-MATLAB','Fitted','NumColumns',3,'location','northeast');
+    L1.Position(2) = 0.9035;
+    L1.Position(1) = 0.52-(L1.Position(3)/2);
+%     print(gcf,'VelMATLAB.png','-dpng','-r500');
+    
+    if doSave
+        fig = gcf;
+        fig.PaperPositionMode = 'auto';
+        fig_pos = fig.PaperPosition;
+        fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'VelResMATLAB.pdf','-dpdf','-vector')
+    end
+
+
+    %% Combined plot AGX Results
+    figure('rend','painters','pos',[pp{3,3} sizex 1.8*sizey]);
+    ha = tight_subplot(2,1,[.08 .07],[.1 .12],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    hm = plot(-5:5,BCV_CB(1:3,:),'linewidth',1); grid on; hold on;                           %Measurement
+    hA = plot(k,BCV_MB_AGX(1:3,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');            %MATLAB data
+    set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
+    set(hA,{'color'},{color.Red; color.Green; color.Blue})
+    p = plot(-5:Ib,BCV_CBaf(1:3,1:indx_b)','--','color','k','LineWidth',1.2);
+    plot(Ic:5,BCV_CBef(1:3,indx_c:11)','--','color','k','LineWidth',1.2);
+    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
+    ha(1).XTick = k;
+    xline(-5,'-.')
+    xline(indx_b-6,'-.')
+    xline(indx_c-6,'-.')
+    xline(5,'-.')
+    
+    axes(ha(2));
+    hm = plot(-5:5,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                          %Measurement
+    hA = plot(k,BCV_MB_AGX(4:6,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');           %MATLAB data
+    set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
+    set(hA,{'color'},{color.Red; color.Green; color.Blue})
+    plot(-5:Ib,BCV_CBaf(4:6,1:indx_b)','--','color','k','LineWidth',1.2);
+    plot(Ic:5,BCV_CBef(4:6,indx_c:11)','--','color','k','LineWidth',1.2);
+    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
+    ha(2).XTick = k;
+    xline(-5,'-.')
+    xline(indx_b-6,'-.')
+    xline(indx_c-6,'-.')
+    xline(5,'-.')
+    L1 = legend([hm(1) hm(2) hm(3) hA(1) hA(2) hA(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','$x$-Algoryx','$y$-Algoryx','$z$-Algoryx','Fitted','NumColumns',3,'location','northeast');
+    L1.Position(2) = 0.90;
+    L1.Position(1) = 0.52-(L1.Position(3)/2);
+%     print(gcf,'VelAGX.png','-dpng','-r500');
+    
+    if doSave
+        fig = gcf;
+        fig.PaperPositionMode = 'auto';
+        fig_pos = fig.PaperPosition;
+        fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'figures/VelResAGX.pdf','-dpdf','-vector')
     end
 %%
 %Plot contact point trajectories over time

@@ -31,7 +31,9 @@ If you are using this paper as reference, please refer to it as
 ``` -->
 Requirements
 ===========
- - [1D_Archive.h5](https://doi.org/10.4121/20536569/) Raw data file 
+The following datasets are required to run the code. They can be downloaded via the links below and should be placed in the [data](/data/) folder. 
+ - [I_AM_Archive_3_BoxDrops.h5](https://doi.org/10.4121/17122553/) : Raw data file containing box-drop experiments of Box003, Box004, and Box005.
+ - [I_AM_Archive_5_ParamID_Box006.h5](https://doi.org/10.4121/21024007) : Archive containing experiments for parameter identification of Box006 
 
 Introduction
 ============
@@ -74,6 +76,8 @@ The experiments for parameter identification are stored in Archives. The archive
 
 ## Part 1: Parameter identification
 In the models used, the coefficient of friction (COF) and coefficient of restitution (COR) need to be identified, as they differ per object/environment combination. There are two metrics that are used for the identification of the parameters. The first metric is a *velocity based* metric, where the loss function is based on a comparison between predicted and measured post-impact velocity, given a pre-impact object state. The second metric is a *trajectory based* metric, where the loss function is based on a comparison between a measured and simulated trajectory, and the optimum parameters are the ones that minimize this error.  
+
+## Part 2: Prediction performance
 
 # Installation
 The code of this repository is all written in MATLAB and can directly be pulled from this repository. 
