@@ -23,7 +23,7 @@ Conference TBD
 
 If you are using this paper as reference, please refer to it as
 ```bibtex
-@inproceedings{Lubbers2022_LearningSuction,
+@inproceedings{Jongeneel2022_ParameterIdentification,
     author = {M J Jongeneel, L Poort, N van de Wouw, and A Saccon},
     title = {{Parameter Identification and Validation of Nonsmooth Impact Models with Friction}},
     booktitle = {TBD},
