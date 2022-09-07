@@ -22,15 +22,15 @@ Conference TBD
 # 
 
 If you are using this paper as reference, please refer to it as
-<!-- ```bibtex
+```bibtex
 @inproceedings{Lubbers2022_LearningSuction,
-    author = {M Lubbers J van Voorst M J Jongeneel and A Saccon},
-    title = {{Learning Suction Cup Dynamics from Motion Capture: Accurate Prediction of an Object's Vertical Motion during Release}},
-    booktitle = {IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS 2022)},
-    year = {2022},
-    month = {October}
+    author = {M J Jongeneel, L Poort, N van de Wouw, and A Saccon},
+    title = {{Parameter Identification and Validation of Nonsmooth Impact Models with Friction}},
+    booktitle = {TBD},
+    year = {TBD},
+    month = {TBD}
 }
-``` -->
+```
 Requirements
 ===========
 The following datasets are required to run the code. They can be downloaded via the links below and should be placed in the [data](/data/) folder. 
