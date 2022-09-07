@@ -57,7 +57,7 @@ The code in this repository can be split into two main parts. The first part foc
 </div>
 </div> 
 
-The experiments for parameter identification are stored in Archives. The archive containing box-impact experiments for Box003, Box004, and Box005 can be found [here](https://doi.org/10.4121/17122553). 
+In the experiments, different objects are used. Below, the different boxes are shown. From left to right: Box003, Box004, Box005, Box006, Box007, and Box009. Detailed information about the objects can be found on the [Impact-Aware Robotics Database](https://impact-aware-robotics-database.tue.nl/objects).
 
 <div style = "display: flex; align="center">
 <img src="figures/Box003.jpg" alt="drawing" width=16%/> 
@@ -68,8 +68,7 @@ The experiments for parameter identification are stored in Archives. The archive
 <img src="figures/Box009.jpg" alt="drawing" width=16%/>
 </div>
 
-
-Detailed information about the objects can be found on the [Impact-Aware Robotics Database](https://impact-aware-robotics-database.tue.nl/objects).
+The experiments for parameter identification are stored in Archives. The archive containing box-impact experiments for Box003, Box004, and Box005 can be found [here](https://doi.org/10.4121/17122553). 
 
 <p>&nbsp;</p>
 
