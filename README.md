@@ -15,9 +15,11 @@ with Friction
 Conference TBD
 <br>
 <br>
-<!-- <a href="https://hal.archives-ouvertes.fr/hal-03740751v1">[Early Paper on HAL]</a> -->
+<a href="/">[Early Paper on HAL]</a>
 </h3>
 </div>
+
+# 
 
 If you are using this paper as reference, please refer to it as
 <!-- ```bibtex
