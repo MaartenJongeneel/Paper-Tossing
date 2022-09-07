@@ -36,7 +36,9 @@ Requirements
 Introduction
 ============
 
-<!-- The content of this repository is associated to the paper "Learning Suction Cup Dynamics from Motion Capture: Accurate Prediction of an Object's Vertical Motion during Release". The objective for this project was to create a 1D release model of a suction cup, that would describe the position, velocity, and acceleration of the object after it is released from the suction cup. This project is part of the [I.AM. project](www.i-am-project.eu) on Impact Aware Manipulation. More specifically, this paper is the first step to understanding the release dynamics of an object in the full 6D case. This is important to know within the concept of autonomous tossing of parcels in logistic applications.  -->
+The content of this repository is associated to the paper "Parameter Identification and Validation of Nonsmooth Impact Models with Friction". The objective for this project is to empirically evaluate the prediction performance of commonly used impact models. To this end, first a parameter identification approach is used to identify (from experimental data) the coefficients of friction and restitution of the objects that are used in experiments. Second, once these parameters are known, the prediction capabilities of these models are tested on a different experimental dataset. 
+
+This project is part of the European project [I.AM.](www.i-am-project.eu) on Impact Aware Manipulation under the scenario of TOSS. 
 
 
 Table of content
@@ -47,7 +49,32 @@ Table of content
 - [Contact](#contact)
 
 # Overview
+The code in this repository can be split into two main parts. The first part focusses on parameter identification and the second part focusses on the long-horizon prediction performance. Experiments are executed to obtain datasets for identification and performance analysis on the setup shown below.
 
+<div align="center">
+<div style = "display: flex; align="center">
+<img src="figures/ExperimentalSetup.png" width="50%"/> 
+</div>
+</div> 
+
+The experiments for parameter identification are stored in Archives. The archive containing box-impact experiments for Box003, Box004, and Box005 can be found [here](https://doi.org/10.4121/17122553). 
+
+<div style = "display: flex; align="center">
+<img src="figures/Box003.jpg" alt="drawing" width=16%/> 
+<img src="figures/Box004.jpg" alt="drawing" width=16%/>
+<img src="figures/Box005.jpg" alt="drawing" width=16%/>
+<img src="figures/Box006.jpg" alt="drawing" width=16%/>
+<img src="figures/Box007.jpg" alt="drawing" width=16%/>
+<img src="figures/Box009.jpg" alt="drawing" width=16%/>
+</div>
+
+
+Detailed information about the objects can be found on the [Impact-Aware Robotics Database](https://impact-aware-robotics-database.tue.nl/objects).
+
+<p>&nbsp;</p>
+
+## Part 1: Parameter identification
+In the models used, the coefficient of friction (COF) and coefficient of restitution (COR) need to be identified, as they differ per object/environment combination. There are two metrics that are used for the identification of the parameters. The first metric is a *velocity based* metric, where the loss function is based on a comparison between predicted and measured post-impact velocity, given a pre-impact object state. The second metric is a *trajectory based* metric, where the loss function is based on a comparison between a measured and simulated trajectory, and the optimum parameters are the ones that minimize this error.  
 
 # Installation
 The code of this repository is all written in MATLAB and can directly be pulled from this repository. 
@@ -57,4 +84,21 @@ The code of this repository is all written in MATLAB and can directly be pulled 
 
 # Contact
 In case you have questions or if you encountered an error, please contact us through the "Issues" functionality on GIT. 
+
+# TODO
+- [ ] Write a proper README.md
+- [ ] Update `paramID/getImpactData.m`
+    - [ ] Make the object you want to use for paramID as input, get rid of hardcoded stuff
+    - [ ] Also consider gravity, and impact surface
+- [ ] Update paramID subdirectory
+    - [ ] Clean up the scripts
+    - [X] Make Param ID for AGX optional 
+    - [ ] Make scripts for paramID in MuJoCo
+    - [ ] Write proper README.md for that subdirectory
+- [ ] Update the rest-pose prediction scripts
+    - [ ] Make simulations in AGX optional (s.t. one can run also only Matlab)
+    - [ ] Create options for MuJoCo simulation and validation scripts
+    - [ ] Write proper script to evaluate rest-pose on the conveyor of certain (input) object (e.g., box5)
+    - [ ] Write proper script to evaluate pick-up on the (input) object (e.g., box5)
+
 

@@ -1,6 +1,6 @@
 % function impacts = getImpactData(h5file,measname)
 % h5file = "D:\OneDrive - TU Eindhoven\I.AM\9.Database\Archives_local\220426_ParamID_Box006.h5";
-h5file = "D:\OneDrive - TU Eindhoven\I.AM\9.Database\Archives_local\220430_BoxDrops.h5";
+h5file = "D:\OneDrive - TU Eindhoven\I.AM\9.Database\4TUResearchData\ARCHIVE_DATA\211203_Archive_3_BoxDrops\220524_Version_02\220523_I_AM_Archive_3_BoxDrops.h5";
 ObjStr = "Box005"; %The object for which you want to do paramID
 EnvStr = "Conveyor002"; %The Environment for which you want to do paramID
 % ImpPln = true; %Impact plane: false = no Motive impact plane, taking origin as impact plane. Otherwise, give the string name in ImpStr
@@ -24,9 +24,7 @@ ImpPln = "GroundPlane001";
 %                           mentioned impact data.
 %
 %% Obtain the impact data
-set(groot,'defaulttextinterpreter','latex');
-set(groot,'defaultAxesTickLabelInterpreter','latex');
-set(groot,'defaultLegendInterpreter','latex');
+set(groot,'defaulttextinterpreter','latex'); set(groot,'defaultAxesTickLabelInterpreter','latex'); set(groot,'defaultLegendInterpreter','latex');
 %% User settings and constants
 w_ext = 5;          % Extension size of window on both sides
 gravity = true;    % Determine if you have gravity in -z direction of inertial frame
@@ -183,6 +181,7 @@ for iim = 1:length(fname)
                 % Try to determine pre- and post impact indices automatically
                 [indx_b, indx_c, BV_CBaf, BV_CBef, BCV_CB, BCV_CBaf,BCV_CBef] = IdentifyPPinds(cell2mat(dCo_Pimp),w_ext,g,freq,gravity,CH_Bimp,BV_CBimp);
                 if indx_b==6 && indx_c==6 %if input was 0, skip this step
+                    warning('You flagged this impact as not usable. Impact event will be skipped')
                    continue;
                 end
                 

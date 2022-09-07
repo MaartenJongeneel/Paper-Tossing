@@ -65,20 +65,23 @@ if ~exist('indx','var')
     R2 = 1-SSRes/SST;
 
     % Some extra checks to see if indices b and c are valid.
+    if isempty(indx_b) || isempty(indx_c)
+        indx_b = 1; indx_c = 1; indx_bf = 1; indx_cf = 1;
+    end
     if indx_b == indx_c
-        disp('Indices overlap!')
+        warning('Indices overlap!')
     end
     if Cfit.b>a_max
-        disp('Velocity fit is so steep, indices cannot be estimated accurately')
+        warning('Velocity fit is so steep, indices cannot be estimated accurately')
     end
     if R2<Rmin
-        disp('Fit of points is not very accurate according to R2 test');
+        warning('Fit of points is not very accurate according to R2 test');
     end
     if abs(kf(indx_bf) - indx_b +1+w_ext)>dImax
-        disp('First index is close to the middle between two indices, rounding is therefore indecisive');
+        warning('First index is close to the middle between two indices, rounding is therefore indecisive');
     end
     if  abs(kf(indx_cf) - indx_c +1+w_ext)>dImax
-        disp('Last index is close to the middle between two indices, rounding is therefore indecisive');
+        warning('Last index is close to the middle between two indices, rounding is therefore indecisive');
     end
 else
     indx_b = indx(1);
@@ -104,11 +107,11 @@ end
 
 % Determine fit of velocity
 if gravity
-    BCV_CBaf = BCV_CBa_avg(:,indx_b)  -([0,0,g/freq,0,0,0]'*(0:10));
-    BCV_CBef = BCv_CBe_avg(:,indx_c)-([0,0,g/freq,0,0,0]'*(-10:0));
+    BCV_CBaf = BCV_CBa_avg(:,indx_b) - ([0,0,g/freq,0,0,0]'*(0:10));
+    BCV_CBef = BCv_CBe_avg(:,indx_c) - ([0,0,g/freq,0,0,0]'*(-10:0));
 else
-    BCV_CBaf = BCV_CBa_avg(:,indx_b)  -zeros(6,1)*(0:10);
-    BCV_CBef = BCv_CBe_avg(:,indx_c)-zeros(6,1)*(-10:0);
+    BCV_CBaf = BCV_CBa_avg(:,indx_b) - zeros(6,1)*(0:10);
+    BCV_CBef = BCv_CBe_avg(:,indx_c) - zeros(6,1)*(-10:0);
 end
 % Fitted box twist back to body orientation
 for it = 1:11
@@ -173,7 +176,10 @@ pause(0.1)
 indx_input = input('\n Is estimation OK? Press ENTER to accept values, or give [-b, c]. If not good, give [0,0]:\n');
 if ~isempty(indx_input) %If not empty, it means you overwrite the computed values, so we need to recompute the other values with the new given values
     indx_b = indx_input(1)+w_ext+1; indx_c = indx_input(2)+w_ext+1;
+    if indx_b == 6 || indx_c == 6 %in case we say it is not good
+        return;
+    end    
 
-    %Since we changed it, we need to recompute, so 
+    %If we changed it, we need to recompute, so 
     IdentifyPPinds(dCo_p,w_ext,g,freq,gravity,CH_Bimp,BV_CBimp,[indx_b indx_c]);
 end

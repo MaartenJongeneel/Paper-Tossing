@@ -13,13 +13,15 @@ close all; set(groot,'defaulttextinterpreter','latex'); set(groot,'defaultAxesTi
 
 %% ------------------------------ Settings ------------------------------%%
 %These will be input parsers to a function
-Object = 'Box006';
+Object = 'Box005';
 Environment = "Conveyor002";  %Select what conveyor you want to consider
-impact_data = "paramID/impact_data/220428_Box006_impacts.mat";
+impact_data = "paramID/impact_data/220907_Box005_impacts.mat";
 AGXResult_h5file = "paramID/AGX_results/Box006_paramID/BoxImpactBox006_BoxTossBatch_result.hdf5";
-evalAlgoryx = true;
+evalAlgoryx = false;
 evalMatlab = true;
 evalMuJoCo = false;
+
+
 dt        = 1/360;  %OptiTrack time step
 g         = 9.81;   %Gravitational constant                    [m/s^2]
 freq      = 1/dt;   %OptiTrack sample frequency
