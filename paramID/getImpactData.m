@@ -1,7 +1,7 @@
 % function impacts = getImpactData(h5file,measname)
 % h5file = "D:\OneDrive - TU Eindhoven\I.AM\9.Database\Archives_local\220426_ParamID_Box006.h5";
-h5file = "D:\OneDrive - TU Eindhoven\I.AM\9.Database\4TUResearchData\ARCHIVE_DATA\211203_Archive_3_BoxDrops\220524_Version_02\220523_I_AM_Archive_3_BoxDrops.h5";
-ObjStr = "Box005"; %The object for which you want to do paramID
+h5file = "./data/220907_I_AM_Archive_5_ParamID_Box006.h5";
+ObjStr = "Box006"; %The object for which you want to do paramID
 EnvStr = "Conveyor002"; %The Environment for which you want to do paramID
 % ImpPln = true; %Impact plane: false = no Motive impact plane, taking origin as impact plane. Otherwise, give the string name in ImpStr
 ImpPln = "GroundPlane001";
@@ -104,9 +104,8 @@ for iim = 1:length(fname)
         plocs = [];     ii_imp = [];
         for iv = 1:4 %Loop through first 4 vertices
             [~,ploc] = findpeaks(-Cp_z(iv,:),'MinPeakHeight',-0.005,'MinPeakDistance',5,'MinPeakProminence',0.02); %Find the peaks (moments of impact)
+%             if isempty(ploc); ploc = NaN; plocs(iv,1:length(ploc)) = ploc; continue; end
             plocs(iv,1:length(ploc)) = ploc; %Store the peak locations in matrix
-        end
-        for iv = 1:4 %Loop through first 4 vertices (only these can make contact)
             for ip = 1:length(nonzeros(plocs(iv,:))) %For each peak of the current vertex
                 vrest = (1:8~=iv);
                 %Create a window around the impact location of w_ext timesteps
