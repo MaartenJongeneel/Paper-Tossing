@@ -276,13 +276,13 @@ figure('rend','painters','pos',[500 500 300 260]);
     axis equal
     axis([-0.3 1 -0.7 0.3]);
 %     print(gcf,append('Rest-Pose_',sprintf('%.2d.png',ii)),'-dpng','-r500'); %Uncomment if you want to save this image
-%     if doSave
-%         fig = gcf;
-%         fig.PaperPositionMode = 'auto';
-%         fig_pos = fig.PaperPosition;
-%         fig.PaperSize = [fig_pos(3) fig_pos(4)];
-%         print(fig,append('figures/RestPose/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector')
-%     end
+    if doSave
+        fig = gcf;
+        fig.PaperPositionMode = 'auto';
+        fig_pos = fig.PaperPosition;
+        fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/RestPose/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector')
+    end
     pause();
     hold off;
     end
@@ -470,7 +470,7 @@ figure('pos',[500 500 500 300]);
 %         exportgraphics(f,append('Frame_',sprintf('%.2d.jpg',ii-(id(plotnr,1)-1))),'Resolution',500)
     end
 
-%% Plot measured trajectory
+%% Plot measured trajectory for paper figure
 % Plotting options For plotting the contact surface
 ws    = 3.5;  %Width of the contact surface             [m]
 ls    = 3.5;  %Length of the contact surface           [m]
@@ -491,29 +491,14 @@ figure('rend','painters','pos',[50 50 500 300]);
     %plot Measured box
     for ii=id(plotnr,1):8:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1        
         g1 = plotBox(MH_Bm(:,:,ii,plotnr),box5,[194 135 43]/255,0);hold on;   
-%         if ii > id(plotnr,1) +20
-%             g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr)+[zeros(3,3) [0;0;0.0075]; zeros(1,4)],box5,[0 0.4470 0.7410],0); 
-%         else
-%             g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),box5,[0 0.4470 0.7410],0);
-%         end
         drawnow
     end
-%     box_center = squeeze(MH_Bm(1:3,4,id(plotnr,1)-20:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1,plotnr));
-%     plot3(box_center(1,:),box_center(2,:),box_center(3,:),'color',[0 0 0],'LineWidth',2);
 
     %Other plot options
-    grid on;axis equal;
+    axis equal;
     axis([-0.2 0.8 -0.6 0.8 -0.05 0.3]);
-    xlabel('x [m]');
-    ylabel('y [m]');
-    zlabel('z [m]');
-    %         view(-118,16);
     view(-118,27);
-%     text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
-%     L1 = legend([g1],'Measured Box','location','northeast');
-%     L1.Position(2) = 0.90;
-%     L1.Position(1) = 0.52-(L1.Position(3)/2);
-axis off;
+    axis off;
 
     if doSave
         fig = gcf;
@@ -523,54 +508,7 @@ axis off;
         print(fig,'figures/Measured_box_trajectory_2.pdf','-dpdf','-vector')
     end
 
-%% Plot all the rest poses
-figure('pos',[500 500 500 300]);
-      for ii =2
-        %plot Measured box
-        plotBox(MH_B_rest(:,:,ii),box5,[0.4660 0.6740 0.1880]);hold on;
-        
-        %Plot MATLAB box
-        for ib = 1:Nib            
-            plotBox(MH_B_restM_P(:,:,ib,ii),box5,[0 0.4470 0.7410]); hold on;   
-        end  
-
-        %Plot new AGX box results
-%         plotBox(FH_B_AGX{ii},box,[1 0 0]);hold on;
-                
-        %Plot the conveyor C
-        table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
-        set(table3,'FaceColor',0.8*[1 1 1],'FaceAlpha',1);
-        
-        %Plot the origin of the contact surface with its unit vectors
-        tip = [Fo_C+0.3*FR_C(:,1) Fo_C+0.3*FR_C(:,2) Fo_C+0.3*FR_C(:,3)];
-        plot3([Fo_C(1) tip(1,1)],[Fo_C(2) tip(2,1)],[Fo_C(3) tip(3,1)],'r'); hold on
-        plot3([Fo_C(1) tip(1,2)],[Fo_C(2) tip(2,2)],[Fo_C(3) tip(3,2)],'g');
-        plot3([Fo_C(1) tip(1,3)],[Fo_C(2) tip(2,3)],[Fo_C(3) tip(3,3)],'b');
-        
-        %Plot the origin of the world coordinate frame
-        tip = [0.3*[1;0;0] 0.3*[0;1;0] 0.3*[0;0;1]];
-        plot3([0 tip(1,1)],[0 tip(2,1)],[0 tip(3,1)],'r'); hold on
-        plot3([0 tip(1,2)],[0 tip(2,2)],[0 tip(3,2)],'g');
-        plot3([0 tip(1,3)],[0 tip(2,3)],[0 tip(3,3)],'b');
-
-        grid on;axis equal;
-        axis([-0.4 0.6 -0.4 0.8 -0.05 0.3]);
-        xlabel('x [m]');
-        ylabel('y [m]');
-        zlabel('z [m]');
-        view(-118,16);
-        text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
-        drawnow
-        hold off
-%         pause()
-        
-%         f = gcf;
-%         exportgraphics(f,append('Frame_',sprintf('%.2d.jpg',ii-(id(plotnr,1)-1))),'Resolution',500)
-      end
-      
-
-
-%% Plot impact sequence over time
+%% Plot impact sequence over time (Figure 1 of paper) based on Sander data
 close all;
 %For plotting the contact surface
 ws    = 1.5;  %Width of the contact surface             [m]
@@ -581,8 +519,8 @@ Fo_C = zeros(3,1);
 spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
 
 plotnr = 10;
-fig = figure('rend','painters','pos',[200 200 7*380 7*200]);
-    ha = tight_subplot(1,1,[.08 .07],[.01 .01],[0.01 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+fig = figure('rend','painters','pos',[200 200 7*380 7*150]);
+    ha = tight_subplot(1,1,[.08 .07],[-0.1 -.5],[0.01 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
 
     %Plot the conveyor C
@@ -596,7 +534,7 @@ fig = figure('rend','painters','pos',[200 200 7*380 7*200]);
     axis off;
     camproj('perspective')
     grid on;axis equal;
-    view(-120,12);
+    view(-124,15);
     axis([-0.2 0.6 -0.7 0.7 0 0.5]);
     if doSave
         fig = gcf;
@@ -605,10 +543,6 @@ fig = figure('rend','painters','pos',[200 200 7*380 7*200]);
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,'figures/ImpactSequence.pdf','-dpdf','-vector')
     end
-      
-      
-      
-      
       
 %% FOR THE POSTER
 close all

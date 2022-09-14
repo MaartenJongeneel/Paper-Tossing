@@ -1024,62 +1024,6 @@ view(0,90);
 axis square
 
     
-%%
-vq = griddata(eN,mu,SUMMATLAB,xq,yq,'v4');
-vq(vq<0)=0;
-
-scalefactor = @(x) (x).^-0.2;
-Z2 = scalefactor(vq);
-
-n = 10;
-a = 100;
-lower = min(Z2(:));
-upper = max(Z2(:));
-temp = -1./(linspace(0.1,0.13,n))+(1/0.1);
-% re-scale to be between 0 and 1
-temp_01 = temp/max(temp) - min(temp)/max(temp);
-% re-scale to be between your limits (i.e. 1 and 1.05)
-out = temp_01*(upper-lower) + lower;
-%
-figure;
-[cf, cf1] = contourf(xvec,yvec,Z2,[out 1.29 1.2925],'LineColor','none');
-% [cf cf1] = contourf(xvec,yvec,Z2,linspace(min(Z2(:)),max(Z2(:)),20));
-% colormap(map)
-map = colormap(flipud(gray));
-map(1:20,:) = [];
-map(end-40:end,:)=[];
-colormap(map);
-axis square
-
-
-%% FOR THE POSTER
-close all
-%Plot the combined cost of AGX
-    figure('rend','painters','pos',[pp{2,5} 0.7*sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1));
-    surf(eN,mu,SUMAGX); axis square;
-    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{k=1}^N(\|$diag$(\mathbf{w})(\Delta \mathbf{v})\|)_k$');
-    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
-    xlim([0 1]);
-    ylim([0 1]);
-    view(-40,15);
-    ax = gca;
-    exportgraphics(ax,'CostAGX.eps')
-
-
-    %Plot the combined cost of Matlab
-    figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1));
-    surf(eN,mu,SUMMATLAB); axis square;
-    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{k=1}^N(\|$diag$(\mathbf{w})(\Delta \mathbf{v})\|)_k$');
-    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
-    xlim([0 1]);
-    ylim([0 1]);
-    view(-40,15);
-    ax = gca;
-    exportgraphics(ax,'CostMatlab.eps')
 
 %%
 ws    = 4;                 %With of the contact surface             [m]
@@ -1126,43 +1070,4 @@ figure('pos',[492,466,440,226]);
             fig_pos = fig.PaperPosition;
             fig.PaperSize = [fig_pos(3) fig_pos(4)];
             print(fig,'D:\OneDrive - TU Eindhoven\I.AM\6.GIT\i-am-toss/PosPerspective','-dpdf','-vector')
-        end
-
-%%
-ws    = 1;                 %With of the contact surface             [m]
-ls    = 1;               %Length of the contact surface           [m]
-surfacepoints = [0.5*ws -0.5*ws -0.5*ws 0.5*ws 0.5*ws; -0.5*ls -0.5*ls 0.5*ls 0.5*ls -0.5*ls; 0 0 0 0 0;];
-spoints = MR_C*surfacepoints; %Transform the vertices according to position/orientation of the surface
-figure('pos',[497,221,465,231]);
-        ii=11   ;     
-        %plot Measured box
-        p1 = plotBox(MH_B_meas{ii},box,color.Meas);hold on;
-        
-        %Plot MATLAB box
-        p2 = plotBox(MH_B_M(:,:,ii,optMATLAB_idx),box,color.Matlab); hold on;     
-
-        %Plot new AGX box results
-        p3 = plotBox(MH_B_AGX(:,:,ii,optAGX_idx),box,color.Algoryx);hold on;
-                
-        %Plot the conveyor C
-        table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
-        set(table3,'FaceColor',0.8*[1 1 1],'FaceAlpha',1);
-       
-        grid on;axis equal;
-        axis([-0.3 0.4 -0.1 0.6 -0.02 0.3]);
-        xlabel('x [m]');
-        ylabel('y [m]');
-        zlabel('z [m]');
-        view(0,0); %to see impact correctly
-        text(0.185290858725762,0,0.28287811634349,append('Frame: ',sprintf('%d',ii)),'FontSize',22);
-        grid off; axis off;
-        drawnow  
-
-        if doSave
-            fig = gcf;
-            fig.PaperPositionMode = 'auto';
-            fig_pos = fig.PaperPosition;
-            fig.PaperSize = [fig_pos(3) fig_pos(4)];
-            print(fig,'D:\OneDrive - TU Eindhoven\I.AM\6.GIT\i-am-toss/Pos11','-dpdf','-vector')
-        end
-        
+        end      
