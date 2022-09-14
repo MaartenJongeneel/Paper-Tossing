@@ -1,4 +1,4 @@
-function [AH_B, BV_AB, FN, FT] = BoxSimulator(releasePosition,releaseOrientation,releaseLinVel,releaseAngVel,eN,eT,mu,box,AR_C,Ao_C,dt,endframe)
+function [AH_B, BV_AB, FN, FT] = BoxSimulator(releasePosition,releaseOrientation,releaseLinVel,releaseAngVel,eN,eT,mu,box,AR_C,Ao_C,dt,Ntimeidx)
 %% Box-simulator-FixedPoint:
 %This script uses an augmented Lagrangian approach (fixed-point iteration)
 %for solving the nonlinear algebraic equations for contact impact and
@@ -22,7 +22,7 @@ function [AH_B, BV_AB, FN, FT] = BoxSimulator(releasePosition,releaseOrientation
 %            AR_C                : 3x3 double, Orientation of the contact surface
 %            Ao_C                : 3x1 double, Position of the contact surface
 %            dt                  : 1x1 double, Timestep at which the simulator runs
-%            endtime             : 1x1 double, Simulation time you want to run
+%            Ntimeidx          : 1x1 double, Number of discrete time indices you want to run the simulation
 %
 % OUTPUTS:   AH_B                : Pose of the box over time
 %            BV_AB               : Left trivialized velocity of the box over time
@@ -40,13 +40,13 @@ Bomg_AB = releaseAngVel;   %Angular velocity at t0 of B wrt frame A [m/s]
 PNfull = zeros(8,1);       %Initial guess for momenta PN            [N*s]
 PTfull(1:8,1) = {[0;0]};   %initial guess for momenta PT            [N*s]
 run    = true;             %Boolean to determine if box is moving   [-]
-% endframe = endtime/dt;     %Run to this frame                       [-]
+% Ntimeidx = endtime/dt;     %Run to this frame                       [-]
 
 %% Preallocate memory to speed up the process
-FT = NaN(8,endframe);
-FN = NaN(4,endframe); 
-AH_B = cell(1,endframe);
-E  = NaN(1,endframe);
+FT = NaN(8,Ntimeidx);
+FN = NaN(4,Ntimeidx); 
+AH_B = cell(1,Ntimeidx);
+E  = NaN(1,Ntimeidx);
 
 %% Retrieve info of box struct
 Bp_1 = box.vertices(:,1); Bp_5 = box.vertices(:,5);
@@ -184,7 +184,7 @@ while run
     FT(1:length(PT),ii) = PT;
     
     %Run untill the last frame
-    if  ii == endframe-1
+    if  ii == Ntimeidx-1
        run = false;
     end
     ii = ii+1;
