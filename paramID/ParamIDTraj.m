@@ -8,10 +8,16 @@ addpath(genpath('readH5')); addpath('data');
 %% Load the data
 Data = readH5('211224_ManualTossesBox5.h5');
 %% Constants
-fps = 120;       %Frequency of the recording (I was stupid to not put it on 360..)
-dt  = 1/fps;     %Timestep of the recording 
-mu  = 0:0.05:1;  %Define the parameter range of mu for which you want to run simulations
-eN  = 0:0.05:1;  %Define the parameter range of eN for which you want to run simulations
+fps   = 120;       %Frequency of the recording (I was stupid to not put it on 360..)
+dt    = 1/fps;     %Timestep of the recording 
+mu    = 0:0.05:1;  %Define the parameter range of mu for which you want to run simulations
+eN    = 0:0.05:1;  %Define the parameter range of eN for which you want to run simulations
+N_pos = 20;        %Number of consecutive points where the error is low
+th_Rmean = 1e-5;   %Threshold rotation mean
+
+mu = 0:0.05:1;      %Define the parameter range of mu for which you want to run simulations
+eN = 0:0.05:1;      %Define the parameter range of eN for which you want to run simulations
+eT = 0;             %Define the parameter range of eT for which you want to run simulations
 
 evalMatlab = true;
 %% Loop through the data
@@ -122,22 +128,40 @@ if evalMatlab
     eNvec = repmat(repelem(eN,length(mu)),1,length(eT));
     eTvec = repelem(eT,length(mu)*length(eN));
 
-    for is = 1:tel
+    for is = 2:4%tel
         for ip = 1:(length(mu)*length(eN)*length(eT)) %For all parameters 
             %Obtain MATLAB results
-            endframe = 1*fps; %Simulate 1 second
-            [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eNvec(ip),eTvec(ip),muvec(ip),box5,eye(3),zeros(3,1),1/120,endframe);
-            MH_B_M(:,:,:,ip) = cat(3,MH_B_MATLAB{:});
-            BV_MB_M(:,:,ip) = BV_MB_MATLAB;
+            Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
+            [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eNvec(ip),eTvec(ip),muvec(ip),box5,eye(3),zeros(3,1),1/120,Ntimeidx);
+            MH_B_M = cat(3,MH_B_MATLAB{:});
+
+            Mo_B_meas = Mo_B(:,id(is,1):id(is,2),is);                %Measured position data
+            MR_B_meas = cat(3,MH_Bm(1:3,1:3,id(is,1):id(is,2),is));  %Measured Rotation data
+            Mo_B_M = squeeze(MH_B_M(1:3,4,:));                       %Simulated position data
+            MR_B_M = MH_B_M(1:3,1:3,:);                              %Simulated Rotation data
 
             %Current used index of the parameters
             mu_i = find(muvec(ip) == mu);  eN_i = find(eNvec(ip) == eN); eT_i = find(eTvec(ip) == eT);
             
             %Compute the cost
-            M = length()
-            E_MATLAB(mu_i,eN_i,eT_i,is)=  
+            for it = 1:Ntimeidx
+                e_pos(it) = norm(Mo_B_meas(:,it)-Mo_B_M(:,it));
+                e_rot(it) = norm(logm(MR_B_meas(:,:,it)\MR_B_M(:,:,it))); 
+            end
+
+            %Cost function
+            E_MATLAB(mu_i,eN_i,eT_i,is) = 1/Ntimeidx * (sum(e_pos) + sum(e_rot));            
+        end
+
+        CurrentE_MATLAB = E_MATLAB(:,:,:,is);
+        [~,optMATLAB_idx] = min(CurrentE_MATLAB(:));
+        
+        [a1,b1,c1]=ind2sub(size(E_MATLAB),optMATLAB_idx);
+        if length(a1)==1 && length(b1)==1 && length(c1)==1
+            MATLABmu_opt(is) = mu(a1);
+            MATLABeN_opt(is) = eN(b1);
+            MATLABeT_opt(is) = eT(c1);
         end
     end
-
 end
 %% Evaluate the 
