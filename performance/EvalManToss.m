@@ -154,8 +154,8 @@ writecell(params_csv,'performance/AGX_init_states/friction_restitution_distribut
 %% Plot figure to demonstrate the release and rest determination
 close all
 plotnr = 1;
-figure('rend','painters','pos',[500 500 500 300]);
-ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+figure('rend','painters','pos',[500 500 500 230]);
+ha = tight_subplot(1,1,[.08 .07],[.16 .05],[0.1 0.03]);  %[gap_h gap_w] [lower upper] [left right]
 axes(ha(1));
     plot(((id(plotnr,1)-20):id(plotnr,2)+20)/120,Mo_B(3,(id(plotnr,1)-20):id(plotnr,2)+20,plotnr)); hold on; 
     plot(id(plotnr,1)/fps,Mo_B(3,id(plotnr,1),plotnr),'o','markersize',10,'linewidth',2);
@@ -165,15 +165,22 @@ axes(ha(1));
     xlabel('Time [s]');
     ylabel('$(^M\mathbf{o}_B)_z$ [m]');
     X = [0.66 0.81];
-    Y = [0.51 0.31];
+    Y = [0.44 0.24];
     annotation('arrow',X,Y);
     text(1.68,0.11,'Moment of rest','Fontsize',12);
-    X = [0.47 0.32];
-    Y = [0.79 0.88];
+    X = [0.45 0.28];
+    Y = [0.74 0.83];
     annotation('arrow',X,Y);
     text(1.6,0.158,'Moment of release','Fontsize',12);
     f = gcf;
 %     print(gcf,'Rest-Release.png','-dpng','-r500'); %Uncomment if you want to save this image
+    if doSave
+        fig = gcf;
+        fig.PaperPositionMode = 'auto';
+        fig_pos = fig.PaperPosition;
+        fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'figures/moment_of_release.pdf','-dpdf','-vector')
+    end
 
 %% Do the Matlab simulations of propagating the mean
 load('box5.mat')
@@ -261,18 +268,57 @@ figure('rend','painters','pos',[500 500 300 260]);
     grid on; hold on;
     fill(x2,y2,[0 0.4470 0.7410]);      %Matlab box
     fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
-    xlabel('$(Fo_B)_x$');
-    ylabel('$(Fo_B)_y$');
+    xlabel('$(^M\mathbf{o}_B)_x$');
+    ylabel('$(^M\mathbf{o}_B)_y$');
     L1 = legend('Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
     L1.Position(2) = 0.90;
     L1.Position(1) = 0.52-(L1.Position(3)/2);
     axis equal
     axis([-0.3 1 -0.7 0.3]);
 %     print(gcf,append('Rest-Pose_',sprintf('%.2d.png',ii)),'-dpng','-r500'); %Uncomment if you want to save this image
+%     if doSave
+%         fig = gcf;
+%         fig.PaperPositionMode = 'auto';
+%         fig_pos = fig.PaperPosition;
+%         fig.PaperSize = [fig_pos(3) fig_pos(4)];
+%         print(fig,append('figures/RestPose/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector')
+%     end
     pause();
     hold off;
     end
-
+%% Plot the results of the single Matlab + AGX simulation in smaller figure
+figure('rend','painters','pos',[500 500 150 195]);
+    ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.25 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    for ii =1:tel
+    Ptrans = MH_B_rest(:,:,ii)*[box5.vertices;ones(1,8)];
+    PtransM = MH_B_restM(:,:,ii)*[box5.vertices;ones(1,8)];
+    PtransA = MH_B_restAGX(:,:,ii)*[box5.vertices;ones(1,8)];
+    x1 = [Ptrans(1,1:4) Ptrans(1,1)];
+    y1 = [Ptrans(2,1:4) Ptrans(2,1)];
+    x2 = [PtransM(1,1:4) PtransM(1,1)];
+    y2 = [PtransM(2,1:4) PtransM(2,1)];
+    x3 = [PtransA(1,1:4) PtransA(1,1)];
+    y3 = [PtransA(2,1:4) PtransA(2,1)];
+    
+    fill(x1,y1,[0.4660 0.6740 0.1880]); %Measured box 
+    grid on; hold on;
+    fill(x2,y2,[0 0.4470 0.7410]);      %Matlab box
+    fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
+    xlabel('$(^M\mathbf{o}_B)_x$');
+    ylabel('$(^M\mathbf{o}_B)_y$');
+    axis equal
+    axis([0 0.7 -0.7 0.3]);
+    if doSave
+        fig = gcf;
+        fig.PaperPositionMode = 'auto';
+        fig_pos = fig.PaperPosition;
+        fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/RestPose/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector')
+    end
+%     pause();
+    hold off;
+    end
 %% Plot results of the multiple Matlab simulations (varying parameters)
 figure('rend','painters','pos',[500 500 300 250]);
     ha = tight_subplot(1,1,[.08 .07],[.08 .01],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
@@ -351,7 +397,20 @@ figure('rend','painters','pos',[500 500 300 250]);
 
     hold off;
     end
+%% Compute the errors of the rest-orientation and rest-position
+for ii =1:tel
+    E_rot_M(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restM(1:3,1:3,ii)));
+    E_rot_A(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX(1:3,1:3,ii)));
+    E_pos_M(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restM(1:3,4,ii))';
+    E_pos_A(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
+    E_pos_M_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restM_P(1:3,4,:,ii))),2))';
+    E_pos_A_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restAGX_P(1:3,4,:,ii))),2))';
 
+    e_pos_M = norm(mean(abs(E_pos_M(:,1:2))));
+    e_pos_A = norm(mean(abs(E_pos_A(:,1:2))));
+    e_pos_M_P = norm(mean(abs(E_pos_M_P(:,1:2))));
+    e_pos_A_P = norm(mean(abs(E_pos_A_P(:,1:2))));
+end
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface
 ws    = 1.5;  %Width of the contact surface             [m]
@@ -367,13 +426,13 @@ figure('pos',[500 500 500 300]);
     for ii=id(plotnr,1):1:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1
         
         %plot Measured box
-        g1 = plotBox(MH_Bm(:,:,ii,plotnr),box5,[0.4660 0.6740 0.1880]);hold on;
+        g1 = plotBox(MH_Bm(:,:,ii,plotnr),box5,[0.4660 0.6740 0.1880],0);hold on;
         
         %Plot MATLAB box
-        g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),box5,[0 0.4470 0.7410]); hold on;     
+        g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),box5,[0 0.4470 0.7410],0); hold on;     
 
         %Plot new AGX box results
-        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),box5,[0.8500 0.3250 0.0980]);hold on;
+        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),box5,[0.8500 0.3250 0.0980],0);hold on;
 
         %Plot the conveyor C
         table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
@@ -397,8 +456,8 @@ figure('pos',[500 500 500 300]);
         ylabel('y [m]');
         zlabel('z [m]');
 %         view(-118,16);
-%         view(-118,27);
-        view(-174,23);
+        view(-118,27);
+%         view(-174,23);
 %         view(-90,0);
         text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
         L1 = legend([g1 g2 g3],'Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
@@ -409,6 +468,59 @@ figure('pos',[500 500 500 300]);
 %         pause()        
 %         f = gcf;
 %         exportgraphics(f,append('Frame_',sprintf('%.2d.jpg',ii-(id(plotnr,1)-1))),'Resolution',500)
+    end
+
+%% Plot measured trajectory
+% Plotting options For plotting the contact surface
+ws    = 3.5;  %Width of the contact surface             [m]
+ls    = 3.5;  %Length of the contact surface           [m]
+surfacepoints = [0.5*ws -0.5*ws -0.5*ws 0.5*ws 0.5*ws; -0.5*ls -0.5*ls 0.5*ls 0.5*ls -0.5*ls; 0 0 0 0 0;];
+FR_C = eye(3); 
+Fo_C = zeros(3,1);
+spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
+
+plotnr = 39;
+%Plot the trajectory of the box
+figure('rend','painters','pos',[50 50 500 300]);
+    ha = tight_subplot(1,1,[.08 .07],[.01 .01],[0.03 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    %Plot the conveyor C
+    table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
+    set(table3,'FaceColor',[56 53 48]/255,'FaceAlpha',1);
+    
+    %plot Measured box
+    for ii=id(plotnr,1):8:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1        
+        g1 = plotBox(MH_Bm(:,:,ii,plotnr),box5,[194 135 43]/255,0);hold on;   
+%         if ii > id(plotnr,1) +20
+%             g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr)+[zeros(3,3) [0;0;0.0075]; zeros(1,4)],box5,[0 0.4470 0.7410],0); 
+%         else
+%             g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),box5,[0 0.4470 0.7410],0);
+%         end
+        drawnow
+    end
+%     box_center = squeeze(MH_Bm(1:3,4,id(plotnr,1)-20:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1,plotnr));
+%     plot3(box_center(1,:),box_center(2,:),box_center(3,:),'color',[0 0 0],'LineWidth',2);
+
+    %Other plot options
+    grid on;axis equal;
+    axis([-0.2 0.8 -0.6 0.8 -0.05 0.3]);
+    xlabel('x [m]');
+    ylabel('y [m]');
+    zlabel('z [m]');
+    %         view(-118,16);
+    view(-118,27);
+%     text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
+%     L1 = legend([g1],'Measured Box','location','northeast');
+%     L1.Position(2) = 0.90;
+%     L1.Position(1) = 0.52-(L1.Position(3)/2);
+axis off;
+
+    if doSave
+        fig = gcf;
+        fig.PaperPositionMode = 'auto';
+        fig_pos = fig.PaperPosition;
+        fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'figures/Measured_box_trajectory_2.pdf','-dpdf','-vector')
     end
 
 %% Plot all the rest poses
@@ -455,8 +567,49 @@ figure('pos',[500 500 500 300]);
 %         f = gcf;
 %         exportgraphics(f,append('Frame_',sprintf('%.2d.jpg',ii-(id(plotnr,1)-1))),'Resolution',500)
       end
+      
 
 
+%% Plot impact sequence over time
+close all;
+%For plotting the contact surface
+ws    = 1.5;  %Width of the contact surface             [m]
+ls    = 1.5;  %Length of the contact surface           [m]
+surfacepoints = [0.5*ws -0.5*ws -0.5*ws 0.5*ws 0.5*ws; -0.5*ls -0.5*ls 0.5*ls 0.5*ls -0.5*ls; 0 0 0 0 0;];
+FR_C = eye(3); 
+Fo_C = zeros(3,1);
+spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
+
+plotnr = 10;
+fig = figure('rend','painters','pos',[200 200 7*380 7*200]);
+    ha = tight_subplot(1,1,[.08 .07],[.01 .01],[0.01 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+
+    %Plot the conveyor C
+    table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
+    set(table3,'FaceColor',[56 53 48]/255,'FaceAlpha',1);
+
+    for ii = [2050 2314 2355 2381 2397 2600]
+    plotBox(T*cat(3,MH_Bm_sander(:,:,ii)),box5,[194 135 43]/255,0);
+    drawnow;
+    end
+    axis off;
+    camproj('perspective')
+    grid on;axis equal;
+    view(-120,12);
+    axis([-0.2 0.6 -0.7 0.7 0 0.5]);
+    if doSave
+        fig = gcf;
+        fig.PaperPositionMode = 'auto';
+        fig_pos = fig.PaperPosition;
+        fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'figures/ImpactSequence.pdf','-dpdf','-vector')
+    end
+      
+      
+      
+      
+      
 %% FOR THE POSTER
 close all
 plotnr = 1;

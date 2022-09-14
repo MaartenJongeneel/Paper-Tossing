@@ -5,6 +5,8 @@ ObjStr = "Box006"; %The object for which you want to do paramID
 EnvStr = "Conveyor002"; %The Environment for which you want to do paramID
 % ImpPln = true; %Impact plane: false = no Motive impact plane, taking origin as impact plane. Otherwise, give the string name in ImpStr
 ImpPln = "GroundPlane001";
+doPlot = false;
+doSave = false;
 
 % This function loads a HDF5 file, and loads the specified measurement
 % data. It then selects the time instances of impact and evaluates if the
@@ -39,7 +41,7 @@ fname = fieldnames(H5data);
 for iim = 1:length(fname)
     if contains(string(fname(iim)),'Rec')
         data = H5data.(string(fname(iim)));
-    
+
         %If the current recording does not have the object we want, we
         %continue to the next recording
         if ~isfield(data.SENSOR_MEASUREMENT.Mocap.POSTPROCESSING, ObjStr)
@@ -55,32 +57,26 @@ for iim = 1:length(fname)
         box = data.OBJECT.(OBJECT(ibox));         % Box object
         Bp = box.vertices.ds';                    % Vertices of the box
 
-        % Set initial parameters        
-        t  = table2array(data.SENSOR_MEASUREMENT.Mocap.datalog.ds(:,'Time(s)'));  % Time vector
+        % Set initial parameters
+        t  = table2array(data.SENSOR_MEASUREMENT.Mocap.datalog.ds(:,'Time(s)'));        % Time vector
         freq = str2double(data.SENSOR_MEASUREMENT.Mocap.datalog.attr.sample_frequency); % OptiTrack sample frequency
-        dt = 1/freq;                     % Time step [s]
+        dt = 1/freq;  % Time step [s]
 
         % Transforamtion matrix expressing object in terms of robot base
         MH_B = data.SENSOR_MEASUREMENT.Mocap.POSTPROCESSING.(OBJECT(ibox)).transforms.ds';
 
         %Preallocate memmory based on the number of samples of the data
-        Nsamples = length(MH_B);
-        CH_Bc   = repmat({NaN(4,4)},1,Nsamples);
-        Cp_z    = NaN(8,Nsamples);
-        dCo_B   = NaN(3,Nsamples);
-        dMo_B   = NaN(3,Nsamples);
-        Bv_MB   = NaN(3,Nsamples);
-        Cv_CB   = NaN(3,Nsamples);
-        Bv_CB   = NaN(3,Nsamples);
-        Bomg_MB = NaN(3,Nsamples);
-        Comg_CB = NaN(3,Nsamples);
-        Bomg_CB = NaN(3,Nsamples);
-        dCp     = NaN(3,length(Bp),Nsamples);
+        Nsamples = length(MH_B);                 Cv_CB   = NaN(3,Nsamples);
+        CH_Bc   = repmat({NaN(4,4)},1,Nsamples); Bv_CB   = NaN(3,Nsamples);
+        Cp_z    = NaN(8,Nsamples);               Bomg_MB = NaN(3,Nsamples);
+        dCo_B   = NaN(3,Nsamples);               Comg_CB = NaN(3,Nsamples);
+        dMo_B   = NaN(3,Nsamples);               Bomg_CB = NaN(3,Nsamples);
+        Bv_MB   = NaN(3,Nsamples);               dCp     = NaN(3,length(Bp),Nsamples);        
 
         % Get the contact plane posture
         if isfield(data.SENSOR_MEASUREMENT.Mocap.POSTPROCESSING, ImpPln)
             try
-                MH_C = data.SENSOR_MEASUREMENT.Mocap.POSTPROCESSING.(ImpPln).transforms.ds';                
+                MH_C = data.SENSOR_MEASUREMENT.Mocap.POSTPROCESSING.(ImpPln).transforms.ds';
             catch
                 error(append("Can't get the data from object",ImpPln));
             end
@@ -90,7 +86,7 @@ for iim = 1:length(fname)
             %Take the motive frame as the impact plane frame with zero velocity
             MH_C = repmat({eye(4)},1,Nsamples);
             Mv_MC = [0;0;0];
-        end        
+        end
 
         for ii = 1:Nsamples
             %Transformation of box expressed in conveyor frame
@@ -102,9 +98,8 @@ for iim = 1:length(fname)
 
         % Determine all substancial impacts
         plocs = [];     ii_imp = [];
-        for iv = 1:4 %Loop through first 4 vertices
+        for iv = 1:8 %Loop through first 4 vertices
             [~,ploc] = findpeaks(-Cp_z(iv,:),'MinPeakHeight',-0.005,'MinPeakDistance',5,'MinPeakProminence',0.02); %Find the peaks (moments of impact)
-%             if isempty(ploc); ploc = NaN; plocs(iv,1:length(ploc)) = ploc; continue; end
             plocs(iv,1:length(ploc)) = ploc; %Store the peak locations in matrix
             for ip = 1:length(nonzeros(plocs(iv,:))) %For each peak of the current vertex
                 vrest = (1:8~=iv);
@@ -115,23 +110,46 @@ for iim = 1:length(fname)
                 %Check if any other vertex is in contact in window (So vertex position w.r.t. conv. is smaller than 0??)
                 if any(any(Cp_z(vrest,wind)<0)), continue; end
                 %Check for frame drops (then two positions within the window are exactly the same (why zero order hold??)
-%                 if length(unique(squeeze(CH_Bm(1:3,4,wind))','rows'))~=2*w_ext+1, continue; end
+                %                 if length(unique(squeeze(CH_Bm(1:3,4,wind))','rows'))~=2*w_ext+1, continue; end
                 %Check for mimimal coincident velocity (in 5 timesteps before the impact, relative vel. should be \leq 0.3 m/s)
-%                 if min(dCp(3,iv,plocs(iv,ip)-[1:w_ext]))>-0.3,  continue; end
+                %                 if min(dCp(3,iv,plocs(iv,ip)-[1:w_ext]))>-0.3,  continue; end
                 %If all checks are passed, indices of substantial impacts are saved
                 ii_imp = [ii_imp, plocs(iv,ip)];
             end
         end
         ii_imp = sort(ii_imp);
-        if isempty(ii_imp)
-            continue;
+
+        %If there are no impacts selected, go to the next impact event
+        if isempty(ii_imp);  continue; end
+
+        %Plotting and saving a figure
+        if doPlot
+        figure('rend','painters','pos',[200 200 380 200]);
+            ha = tight_subplot(1,1,[.08 .07],[.17 .03],[0.11 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+            axes(ha(1));
+            vertex=find(plocs==ii_imp);
+            vrest = 1:8~=vertex;
+            p1 = plot(Cp_z(vrest,:)','color',[0 0 0 0.1]); hold on; grid on;
+            p2 = plot(Cp_z(vertex,:)','color',[0 0.4470 0.7410]);
+            p3 = plot(plocs(vertex),Cp_z(vertex,plocs(vertex)),'o','color',[0 0.4470 0.7410]);
+            axis([240 450 -0.02 0.3]);
+            xlabel('Time index $t_k$');
+            ylabel('$(^C\mathbf{p}_i(t_k))_z$ [m]')
+            L1 = legend([p2 p3 p1(1)],'Trajectory of $(^C\mathbf{p}_1)_z$','Found impact time $t_j$ = 275','Trajectory of $(^C\mathbf{p}_{i\neq1})_z$','location','northeast');
+            if doSave
+                fig = gcf;
+                fig.PaperPositionMode = 'auto';
+                fig_pos = fig.PaperPosition;
+                fig.PaperSize = [fig_pos(3) fig_pos(4)];
+                print(fig,'figures/impact_selection.pdf','-dpdf','-vector')
+            end
         end
 
-         for ii = 1:Nsamples
+        for ii = 1:Nsamples
             %Transformation of box expressed in conveyor frame
             MH_C{ii} = MH_C{ii}+[zeros(3,3),[0;0;min(Cp_z(:,ii_imp(1)))];zeros(1,4)]; %Align impact plane with box vertex
             CH_Bc{1,ii} = MH_C{ii}\MH_B{ii};
-         end        
+        end
 
         % Put Transformation matrices in 4D matrix
         CH_Bm = cat(3,CH_Bc{:});
@@ -181,15 +199,15 @@ for iim = 1:length(fname)
                 [indx_b, indx_c, BV_CBaf, BV_CBef, BCV_CB, BCV_CBaf,BCV_CBef] = IdentifyPPinds(cell2mat(dCo_Pimp),w_ext,g,freq,gravity,CH_Bimp,BV_CBimp);
                 if indx_b==6 && indx_c==6 %if input was 0, skip this step
                     warning('You flagged this impact as not usable. Impact event will be skipped')
-                   continue;
+                    continue;
                 end
-                
+
                 % Add indices to impacts
                 indx(1,3) = indx(1,2)+indx_b-(w_ext+1); % global index of pre-impact
                 indx(1,4) = indx(1,2)+indx_c-(w_ext+1); % global index of post-impact
 
                 close all;
-                
+
                 % Save Impacts to struct
                 % Extend impacts
                 if exist('impacts','var')
@@ -238,16 +256,7 @@ for iim = 1:length(fname)
             if ~isfolder('paramID/impact_data')
                 mkdir('paramID/impact_data');
             end
-            if w_ext == 5
-                save('paramID/impact_data/impacts.mat','impacts');
-                disp(['   >> Added ' num2str(length(ii_imp)) ' suitable impact(s) to impacts.mat']);
-            else
-                save(strcat('paramID/impact_data/impacts', num2str(w_ext), '.mat'),'impacts');
-                disp(['   >> Added ' num2str(length(ii_imp)) ' suitable impact(s) to impacts' num2str(w_ext) '.mat']);
-            end
         end
     end
     textwaitbar(iim,length(fname),['Collecting impact data']);
 end
-% end
-

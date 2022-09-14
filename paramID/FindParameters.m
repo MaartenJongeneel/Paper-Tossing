@@ -13,9 +13,9 @@ close all; set(groot,'defaulttextinterpreter','latex'); set(groot,'defaultAxesTi
 
 %% ------------------------------ Settings ------------------------------%%
 %These will be input parsers to a function
-Object = 'Box005';
+Object = 'Box006';
 Environment = "Conveyor002";  %Select what conveyor you want to consider
-impact_data = "paramID/impact_data/220907_Box005_impacts.mat";
+impact_data = "paramID/impact_data/220428_Box006_impacts.mat";
 AGXResult_h5file = "paramID/AGX_results/Box006_paramID/BoxImpactBox006_BoxTossBatch_result.hdf5";
 evalAlgoryx = true;
 evalMatlab = true;
@@ -675,7 +675,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,'CPVelocity_CentralEuler.pdf','-dpdf','-vector')
     end
-%
+
 %Combined plot
     figure('rend','painters','pos',[pp{3,3} sizex 1.8*sizey]);
     ha = tight_subplot(2,1,[.08 .07],[.1 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
@@ -711,10 +711,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     L1 = legend([hm(1) hm(2) hm(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','Fitted','NumColumns',4,'location','northeast');
     L1.Position(2) = 0.96;
     L1.Position(1) = 0.52-(L1.Position(3)/2);
-
-
-%     print(gcf,'MeasuredVelocities.png','-dpng','-r500');
-    
+%     print(gcf,'MeasuredVelocities.png','-dpng','-r500');    
     if doSave
         fig = gcf;
         fig.PaperPositionMode = 'auto';
@@ -771,7 +768,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     end
 
 
-    %% Combined plot AGX Results
+    %Combined plot AGX Results
     figure('rend','painters','pos',[pp{3,3} sizex 1.8*sizey]);
     ha = tight_subplot(2,1,[.08 .07],[.1 .12],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
@@ -815,7 +812,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,'figures/VelResAGX.pdf','-dpdf','-vector')
     end
-%%
+
 %Plot contact point trajectories over time
 figure('rend','painters','pos',[pp{1,2} sizex sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
@@ -842,14 +839,16 @@ figure('rend','painters','pos',[pp{1,2} sizex sizey]);
     end
 
 
-% %Plot contact point trajectories in space
-% figure('rend','painters','pos',[pp{1,3} sizex sizey]);
-%     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-%     axes(ha(1));
-%     plot3((squeeze(Cp_m(1,V_impact(1),:))),(squeeze(Cp_m(2,V_impact(1),:))),(squeeze(Cp_m(3,V_impact(1),:))),'color',color.Meas); hold on;
-%     plot3((squeeze(Cp_M(1,V_impact(1),:,optMATLAB_idx))),(squeeze(Cp_M(2,V_impact(1),:,optMATLAB_idx))),(squeeze(Cp_M(3,V_impact(1),:,optMATLAB_idx))),'color',color.Matlab);
-%     plot3((squeeze(Cp_AGX(1,V_impact(1),1:11,optAGX_idx))),(squeeze(Cp_AGX(2,V_impact(1),1:11,optAGX_idx))),(squeeze(Cp_AGX(3,V_impact(1),1:11,optAGX_idx))),'color',color.Algoryx);
-%     axis equal; grid on;
+    
+
+%% %Plot contact point trajectories in space
+figure('rend','painters','pos',[pp{1,3} sizex sizey]);
+    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    plot3((squeeze(Cp_m(1,V_impact(1),:))),(squeeze(Cp_m(2,V_impact(1),:))),(squeeze(Cp_m(3,V_impact(1),:))),'color',color.Meas); hold on;
+    plot3((squeeze(Cp_M(1,V_impact(1),:,optMATLAB_idx))),(squeeze(Cp_M(2,V_impact(1),:,optMATLAB_idx))),(squeeze(Cp_M(3,V_impact(1),:,optMATLAB_idx))),'color',color.Matlab);
+    plot3((squeeze(Cp_AGX(1,V_impact(1),1:11,optAGX_idx))),(squeeze(Cp_AGX(2,V_impact(1),1:11,optAGX_idx))),(squeeze(Cp_AGX(3,V_impact(1),1:11,optAGX_idx))),'color',color.Algoryx);
+    axis equal; grid on;
 
 % %Fitting of contact point velocity
 % figure('rend','painters','pos',[pp{2,1} sizex sizey]);
