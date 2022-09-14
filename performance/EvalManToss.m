@@ -23,6 +23,9 @@ Algoryx_eT = 0;          %Optimum parameter found for Algoryx
 Algoryx_mu = 0.4;        %Optimum parameter found for Algoryx
 Algoryx_eN_sigma = 0.127; %Covariance of eN parameter set (not covariance of mean!)
 Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
+color.Matlab = [237 176 33]/255;
+color.Algoryx = [77 191 237]/255;
+color.Meas = [128 128 128]/255;
 %% Loop through the data
 tel = 0;
 fn = fieldnames(Data);
@@ -301,10 +304,10 @@ figure('rend','painters','pos',[500 500 150 195]);
     x3 = [PtransA(1,1:4) PtransA(1,1)];
     y3 = [PtransA(2,1:4) PtransA(2,1)];
     
-    fill(x1,y1,[0.4660 0.6740 0.1880]); %Measured box 
+    fill(x1,y1,color.Meas); %Measured box 
     grid on; hold on;
-    fill(x2,y2,[0 0.4470 0.7410]);      %Matlab box
-    fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
+    fill(x2,y2,color.Matlab);      %Matlab box
+    fill(x3,y3,color.Algoryx); %AGX box
     xlabel('$(^M\mathbf{o}_B)_x$');
     ylabel('$(^M\mathbf{o}_B)_y$');
     axis equal
