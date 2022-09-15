@@ -13,9 +13,10 @@ th_Rmean = 1e-5; %Threshold rotation mean
 fps      = 120;
 dt       = 1/fps;%Timestep of the recording (I was stupid to not put it on 360..)
 N_pos    = 20; %Number of consecutive points where the error is low
-MATLAB_eN = 0.35;        %Optimum parameter found for MATLAB
+doSave   = false;
+MATLAB_eN = 0.2;%0.35;        %Optimum parameter found for MATLAB Traj = 0.2, Vel = 0.35
 MATLAB_eT = 0;           %Optimum parameter found for MATLAB
-MATLAB_mu = 0.45;        %Optimum parameter found for MATLAB
+MATLAB_mu = 0.4;%0.45;        %Optimum parameter found for MATLAB Traj = 0.4, Vel = 0.45
 MATLAB_eN_sigma = 0.125; %Covariance of eN parameter set (not covariance of mean!)
 MATLAB_mu_sigma = 0.124; %Covariance of mu parameter set (not covariance of mean!)
 Algoryx_eN = 0.3;        %Optimum parameter found for Algoryx
@@ -189,8 +190,8 @@ axes(ha(1));
 load('box5.mat')
 for is = 1:tel
     %Obtain MATLAB results
-    endframe = 1*fps; %Simulate 1 second
-    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB_eN,MATLAB_eT,MATLAB_mu,box5,eye(3),zeros(3,1),1/120,endframe);
+    Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
+    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB_eN,MATLAB_eT,MATLAB_mu,box5,eye(3),zeros(3,1),1/120,Ntimeidx);
     for ii = 1:length(MH_B_MATLAB)
     MH_B_Matlab(:,:,ii,is) = MH_B_MATLAB{ii};
     end
@@ -259,18 +260,18 @@ figure('rend','painters','pos',[500 500 300 260]);
     for ii =1:tel
     Ptrans = MH_B_rest(:,:,ii)*[box5.vertices;ones(1,8)];
     PtransM = MH_B_restM(:,:,ii)*[box5.vertices;ones(1,8)];
-    PtransA = MH_B_restAGX(:,:,ii)*[box5.vertices;ones(1,8)];
+%     PtransA = MH_B_restAGX(:,:,ii)*[box5.vertices;ones(1,8)];
     x1 = [Ptrans(1,1:4) Ptrans(1,1)];
     y1 = [Ptrans(2,1:4) Ptrans(2,1)];
     x2 = [PtransM(1,1:4) PtransM(1,1)];
     y2 = [PtransM(2,1:4) PtransM(2,1)];
-    x3 = [PtransA(1,1:4) PtransA(1,1)];
-    y3 = [PtransA(2,1:4) PtransA(2,1)];
+%     x3 = [PtransA(1,1:4) PtransA(1,1)];
+%     y3 = [PtransA(2,1:4) PtransA(2,1)];
     
     fill(x1,y1,[0.4660 0.6740 0.1880]); %Measured box 
     grid on; hold on;
     fill(x2,y2,[0 0.4470 0.7410]);      %Matlab box
-    fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
+%     fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
     xlabel('$(^M\mathbf{o}_B)_x$');
     ylabel('$(^M\mathbf{o}_B)_y$');
     L1 = legend('Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
@@ -408,12 +409,15 @@ for ii =1:tel
     E_pos_A(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
     E_pos_M_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restM_P(1:3,4,:,ii))),2))';
     E_pos_A_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restAGX_P(1:3,4,:,ii))),2))';
-
-    e_pos_M = norm(mean(abs(E_pos_M(:,1:2))));
-    e_pos_A = norm(mean(abs(E_pos_A(:,1:2))));
-    e_pos_M_P = norm(mean(abs(E_pos_M_P(:,1:2))));
-    e_pos_A_P = norm(mean(abs(E_pos_A_P(:,1:2))));
 end
+
+e_pos_M = norm(mean(abs(E_pos_M(:,1:2))));
+e_rot_M = mean(abs(E_rot_M(:,1)));
+e_pos_A = norm(mean(abs(E_pos_A(:,1:2))));
+e_rot_A = mean(abs(E_rot_A(:,1)));
+e_pos_M_P = norm(mean(abs(E_pos_M_P(:,1:2))));
+e_pos_A_P = norm(mean(abs(E_pos_A_P(:,1:2))));
+
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface
 ws    = 1.5;  %Width of the contact surface             [m]
