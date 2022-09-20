@@ -31,34 +31,26 @@ for ii = 1:length(fn)
         %Get the tranforms of the object
         MH_B = Mocap.POSTPROCESSING.(ObjStr).transforms.ds;      
         
-        % Get the contact plane transforms
-        if isfield(Mocap.POSTPROCESSING, ImpPln)
-            try
-                MH_C = Mocap.POSTPROCESSING.(ImpPln).transforms.ds';
-            catch
-                error(append("Can't get the data from object",ImpPln));
-            end
-        else
-            %Take the motive frame as the impact plane frame with zero velocity
-            MH_C = repmat({eye(4)},1,Nsamples);
-        end
+%         % Get the contact plane transforms
+%         if isfield(Mocap.POSTPROCESSING, ImpPln)
+%             try
+%                 MH_C = Mocap.POSTPROCESSING.(ImpPln).transforms.ds';
+%             catch
+%                 error(append("Can't get the data from object",ImpPln));
+%             end
+%         else
+%             %Take the motive frame as the impact plane frame with zero velocity
+%             MH_C = repmat({eye(4)},1,Nsamples);
+%         end
                
-        %Get the transform of the Base w.r.t. Motive origin
-%         i_bd_Box5_R   = contains(string(Mocap.datalog.ds.Properties.VariableNames),"Box005_R");
-%         i_bd_Box5_P   = contains(string(Mocap.datalog.ds.Properties.VariableNames),"Box005_P");
-
         %Rewrite the data into mat structures
         Nsamples = length(MH_B);
         for jj = 1:Nsamples
-%             MH_Bm(:,:,jj,tel) = makehgtform('translate', table2array(Mocap.datalog.ds(jj,i_bd_Box5_P)))* ... %translation
-%                 quat2tform(table2array(Mocap.datalog.ds(jj,i_bd_Box5_R))); %Rotation
-%             MH_Bm(:,:,jj,tel) = [rotx(90), zeros(3,1); zeros(1,3),1]*[roty(90), zeros(3,1); zeros(1,3),1]*MH_Bm(:,:,jj,tel);
             MH_Bm(:,:,jj,tel) = MH_B{jj};
         end
         
         %Few definitions from data:
         Mo_B(:,1:length(MH_Bm(1:3,4,:,tel)),tel) = squeeze(MH_Bm(1:3,4,:,tel));
-
         
         %-------------------- Compute the velocities --------------------%
         %Compute angular and linear velocity of B w.r.t. M
@@ -77,32 +69,50 @@ for ii = 1:length(fn)
 
             
         %--------------- Determine the moment of release ----------------%
-        %Find the peaks of the position data (height) to find when the box
-        %is released from the hand
+        %Find the peaks of the position data (height) to find when the box is released from the hand
         
-        t = find(vecnorm(dMo_B(:,100:end))<0.02); %Find the indices where difference in rel. pos. is small
-        x = diff(t)==1;
-        f = find([false,x]~=[x,false]);
-        g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
-        id_rest = t(f(2*g-1))+99; % First t followed by >=N_pos consecutive numbers
-        
-        if id_rest > 131
-            [pks,id_rel] = findpeaks(Mo_B(3,id_rest-130:id_rest,tel),'MinPeakHeight',0.12,'MinPeakProminence',0.05,'MinPeakWidth',20);
-            id_rel = id_rel+(id_rest-131);
-        else
-            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12,'MinPeakProminence',0.05,'MinPeakWidth',20);
-        end       
+        if ObjStr == "Box005"
+            t = find(vecnorm(dMo_B(:,100:end))<0.02); %Find the indices where difference in rel. pos. is small
+            x = diff(t)==1;
+            f = find([false,x]~=[x,false]);
+            g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
+            id_rest = t(f(2*g-1))+99; % First t followed by >=N_pos consecutive numbers
+            
+            if id_rest > 131
+                [pks,id_rel] = findpeaks(Mo_B(3,id_rest-130:id_rest,tel),'MinPeakHeight',0.12,'MinPeakProminence',0.05,'MinPeakWidth',20);
+                id_rel = id_rel+(id_rest-131);
+            else
+                [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12,'MinPeakProminence',0.05,'MinPeakWidth',20);
+            end  
                 
-        figure; plot(((id_rel-20):id_rest+20)/120,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
-            plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-            plot(id_rest*dt,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-            grid on;
-%             xlim([id_rel-20,id_rest+20]*dt);
-            xlabel('Time [s]');
-            ylabel('$(^M\mathbf{o}_B)_z$ [m]');
-%             pause
-%             close all
+            figure; plot(((id_rel-20):id_rest+20)/120,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
+                plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+                plot(id_rest*dt,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+                grid on;
+                xlim([id_rel-20,id_rest+20]*dt);
+                xlabel('Time [s]');
+                ylabel('$(^M\mathbf{o}_B)_z$ [m]');
+                pause
+                close all
+        end
 
+        if ObjStr == "Box006"
+            id_rest = 1000;
+
+            [pks,id_rel] = findpeaks(Mo_B(3,id_rest-800:id_rest,tel),'MinPeakHeight',0.105,'MinPeakWidth',10);
+            id_rel = id_rel+(id_rest-801);            
+            if isempty(id_rel)
+                id_rel = find(dMo_B(3,:)==min(dMo_B(3,:)))-50;
+            end
+            id_rel = id_rel(1);
+
+            figure; plot(Mo_B(3,:,tel)); hold on;
+                plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+                plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+                grid on;
+                pause
+                close all
+        end
         %------------- Determine the relative release-pose --------------%
         Mo_B_rel(:,tel) = Mo_B(:,id_rel,tel);
         MR_B_rel(:,:,tel) = MH_Bm(1:3,1:3,id_rel,tel);
