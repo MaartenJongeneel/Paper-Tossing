@@ -268,10 +268,10 @@ figure('rend','painters','pos',[500 500 300 260]);
 %     x3 = [PtransA(1,1:4) PtransA(1,1)];
 %     y3 = [PtransA(2,1:4) PtransA(2,1)];
     
-    fill(x1,y1,[0.4660 0.6740 0.1880]); %Measured box 
+    fill(x1,y1,color.Meas); %Measured box 
     grid on; hold on;
-    fill(x2,y2,[0 0.4470 0.7410]);      %Matlab box
-%     fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
+    fill(x2,y2,color.Matlab);      %Matlab box
+%     fill(x3,y3,color.Algoryx); %AGX box
     xlabel('$(^M\mathbf{o}_B)_x$');
     ylabel('$(^M\mathbf{o}_B)_y$');
     L1 = legend('Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
@@ -336,9 +336,9 @@ figure('rend','painters','pos',[500 500 300 250]);
     y2 = [PtransM(2,1:4) PtransM(2,1)];
 
     %Plot result from the experiments
-    fill(x1,y1,[0.4660 0.6740 0.1880]); %Measured box  
+    fill(x1,y1,color.Meas); %Measured box  
     axis equal; axis([-0.3 1 -0.7 0.3]); grid on; hold on
-    fill(x2,y2,[0 0.4470 0.7410]);      %Matlab box
+    fill(x2,y2,color.Matlab);      %Matlab box
 
     %Plot the result from the sampled simulations
     for ib = 1:Nib
@@ -346,7 +346,7 @@ figure('rend','painters','pos',[500 500 300 250]);
     x2 = [PtransM(1,1:4,ib) PtransM(1,1,ib)];
     y2 = [PtransM(2,1:4,ib) PtransM(2,1,ib)];
 
-    h = fill(x2,y2,[0 0.4470 0.7410]); %Matlab box
+    h = fill(x2,y2,color.Matlab); %Matlab box
     h.FaceAlpha = 0.05;
     h.EdgeColor = [0 0 0];
     h.EdgeAlpha = 0.2;    
@@ -376,9 +376,9 @@ figure('rend','painters','pos',[500 500 300 250]);
 
     %Plot result from the experiments
 
-    fill(x1,y1,[0.4660 0.6740 0.1880]); %Measured box
+    fill(x1,y1,color.Meas); %Measured box
     axis equal; axis([-0.3 1 -0.7 0.3]); grid on; hold on
-    fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
+    fill(x3,y3,color.Algoryx); %AGX box
 
     %Plot the result from the sampled simulations
     for ib = 1:Nib
@@ -386,7 +386,7 @@ figure('rend','painters','pos',[500 500 300 250]);
         x3 = [PtransA(1,1:4,ib) PtransA(1,1,ib)];
         y3 = [PtransA(2,1:4,ib) PtransA(2,1,ib)];
 
-        j = fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
+        j = fill(x3,y3,color.Algoryx); %AGX box
         j.FaceAlpha = 0.05;
         j.EdgeColor = [0 0 0];
         j.EdgeAlpha = 0.2;
@@ -433,13 +433,13 @@ figure('pos',[500 500 500 300]);
     for ii=id(plotnr,1):1:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1
         
         %plot Measured box
-        g1 = plotBox(MH_Bm(:,:,ii,plotnr),box5,[0.4660 0.6740 0.1880],0);hold on;
+        g1 = plotBox(MH_Bm(:,:,ii,plotnr),box5,color.Meas,0);hold on;
         
         %Plot MATLAB box
-        g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),box5,[0 0.4470 0.7410],0); hold on;     
+        g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),box5,color.Matlab,0); hold on;     
 
         %Plot new AGX box results
-        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),box5,[0.8500 0.3250 0.0980],0);hold on;
+        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),box5,color.Algoryx,0);hold on;
 
         %Plot the conveyor C
         table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
@@ -586,16 +586,16 @@ axes(ha1(1));
     y2 = [PtransM(2,1:4) PtransM(2,1)];
 
     %Plot result from the experiments
-    p1 = fill(x1,y1,[0.4660 0.6740 0.1880]); %Measured box  
+    p1 = fill(x1,y1,color.Meas); %Measured box  
     axis equal; axis([0 0.8 -0.5 0.1]); grid on; hold on
-    p2 = fill(x2,y2,[0 0.4470 0.7410]);      %Matlab box
+    p2 = fill(x2,y2,color.Matlab);      %Matlab box
 
     %Plot the result from the sampled simulations
     for ib = 1:Nib
     PtransM(:,:,ib) = MH_B_restM_P(:,:,ib,toss_nr)*[box5.vertices;ones(1,8)];
     x2 = [PtransM(1,1:4,ib) PtransM(1,1,ib)];
     y2 = [PtransM(2,1:4,ib) PtransM(2,1,ib)];
-    h = fill(x2,y2,[0 0.4470 0.7410]); %Matlab box
+    h = fill(x2,y2,color.Matlab); %Matlab box
     h.FaceAlpha = 0.05;
     h.EdgeColor = [0 0 0];
     h.EdgeAlpha = 0.2;    
@@ -614,9 +614,9 @@ axes(ha1(1));
     y3 = [PtransA(2,1:4) PtransA(2,1)];
 
     %Plot result from the experiments
-    fill(x1,y1,[0.4660 0.6740 0.1880]); %Measured box
+    fill(x1,y1,color.Meas); %Measured box
     axis equal; axis([0 0.8 -0.5 0.1]); grid on; hold on
-    p3 = fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
+    p3 = fill(x3,y3,color.Algoryx); %AGX box
 
     %Plot the result from the sampled simulations
     for ib = 1:Nib
@@ -624,7 +624,7 @@ axes(ha1(1));
         x3 = [PtransA(1,1:4,ib) PtransA(1,1,ib)];
         y3 = [PtransA(2,1:4,ib) PtransA(2,1,ib)];
 
-        j = fill(x3,y3,[0.8500 0.3250 0.0980]); %AGX box
+        j = fill(x3,y3,color.Algoryx); %AGX box
         j.FaceAlpha = 0.05;
         j.EdgeColor = [0 0 0];
         j.EdgeAlpha = 0.2;

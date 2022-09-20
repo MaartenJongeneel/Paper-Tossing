@@ -6,50 +6,57 @@ addpath(genpath('readH5')); addpath('data');
 % long-horizon tosses and find the parameters that minimize the error in
 % position and orientation over the full trajectory
 %% Load the data
-Data = readH5('211224_ManualTossesBox5.h5');
+% data = readH5('220920_Box005_ManualTosses.h5');
+data = readH5('220919_Box006_ParamID_Traj.h5');
 %% Constants
-fps   = 120;       %Frequency of the recording (I was stupid to not put it on 360..)
-dt    = 1/fps;     %Timestep of the recording 
 mu    = 0:0.05:1;  %Define the parameter range of mu for which you want to run simulations
 eN    = 0:0.05:1;  %Define the parameter range of eN for which you want to run simulations
+eT = 0;            %Define the parameter range of eT for which you want to run simulations
 N_pos = 20;        %Number of consecutive points where the error is low
 th_Rmean = 1e-5;   %Threshold rotation mean
-
-mu = 0:0.05:1;      %Define the parameter range of mu for which you want to run simulations
-eN = 0:0.05:1;      %Define the parameter range of eN for which you want to run simulations
-eT = 0;             %Define the parameter range of eT for which you want to run simulations
-
 evalMatlab = true;
+
+ObjStr = "Box006"; %The object for which you want to do paramID
+ImpPln = "GroundPlane001";
 %% Loop through the data
 tel = 0;
-fn = fieldnames(Data);
+fn = fieldnames(data);
 for ii = 1:length(fn)
     if startsWith(fn{ii},'Rec')
         tel = tel+1;
         %Get the data from the file
-        Mocap = Data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
-        FH_B = Mocap.POSTPROCESSING.Box5.transforms.ds;
-        FH_C = Mocap.POSTPROCESSING.CS_200.transforms.ds;
+        Mocap = data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
+        dt   = 1/double(Mocap.datalog.attr.sample_frequency);   %Timestep of the recording 
         
+        %Get the tranforms of the object
+        MH_B = Mocap.POSTPROCESSING.(ObjStr).transforms.ds;      
+        
+        % Get the contact plane transforms
+        if isfield(Mocap.POSTPROCESSING, ImpPln)
+            try
+                MH_C = Mocap.POSTPROCESSING.(ImpPln).transforms.ds';
+            catch
+                error(append("Can't get the data from object",ImpPln));
+            end
+        else
+            %Take the motive frame as the impact plane frame with zero velocity
+            MH_C = repmat({eye(4)},1,Nsamples);
+        end
+               
         %Get the transform of the Base w.r.t. Motive origin
-        i_bd_Box5_R   = contains(string(Mocap.datalog.ds.Properties.VariableNames),"Box5_R");
-        i_bd_Box5_P   = contains(string(Mocap.datalog.ds.Properties.VariableNames),"Box5_P");
-        
+%         i_bd_Box5_R   = contains(string(Mocap.datalog.ds.Properties.VariableNames),"Box005_R");
+%         i_bd_Box5_P   = contains(string(Mocap.datalog.ds.Properties.VariableNames),"Box005_P");
+
         %Rewrite the data into mat structures
-        Nsamples = length(FH_B);
+        Nsamples = length(MH_B);
         for jj = 1:Nsamples
-            FH_Bm(:,:,jj) = FH_B{jj};
-            FH_Cm(:,:,jj,tel) = FH_C{jj};
-            CH_Bm(:,:,jj,tel) = FH_C{jj}\FH_B{jj};
-            MH_Bm(:,:,jj,tel) = makehgtform('translate', table2array(Mocap.datalog.ds(jj,i_bd_Box5_P)))* ... %translation
-                quat2tform(table2array(Mocap.datalog.ds(jj,i_bd_Box5_R))); %Rotation
-            MH_Bm(:,:,jj,tel) = [Rx(90) zeros(3,1); zeros(1,3),1]*MH_Bm(:,:,jj,tel);
+%             MH_Bm(:,:,jj,tel) = makehgtform('translate', table2array(Mocap.datalog.ds(jj,i_bd_Box5_P)))* ... %translation
+%                 quat2tform(table2array(Mocap.datalog.ds(jj,i_bd_Box5_R))); %Rotation
+%             MH_Bm(:,:,jj,tel) = [rotx(90), zeros(3,1); zeros(1,3),1]*[roty(90), zeros(3,1); zeros(1,3),1]*MH_Bm(:,:,jj,tel);
+            MH_Bm(:,:,jj,tel) = MH_B{jj};
         end
         
         %Few definitions from data:
-        Fo_B(:,1:length(FH_Bm(1:3,4,:)),tel) = squeeze(FH_Bm(1:3,4,:));
-        Fo_C(:,1:length(FH_Cm(1:3,4,:,tel)),tel) = squeeze(FH_Cm(1:3,4,:,tel));
-        Co_B(:,1:length(CH_Bm(1:3,4,:,tel)),tel) = squeeze(CH_Bm(1:3,4,:,tel));  
         Mo_B(:,1:length(MH_Bm(1:3,4,:,tel)),tel) = squeeze(MH_Bm(1:3,4,:,tel));
 
         
@@ -86,6 +93,16 @@ for ii = 1:length(fn)
             [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12,'MinPeakProminence',0.05,'MinPeakWidth',20);
         end       
                 
+        figure; plot(((id_rel-20):id_rest+20)/120,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
+            plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+            plot(id_rest*dt,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+            grid on;
+%             xlim([id_rel-20,id_rest+20]*dt);
+            xlabel('Time [s]');
+            ylabel('$(^M\mathbf{o}_B)_z$ [m]');
+%             pause
+%             close all
+
         %------------- Determine the relative release-pose --------------%
         Mo_B_rel(:,tel) = Mo_B(:,id_rel,tel);
         MR_B_rel(:,:,tel) = MH_Bm(1:3,1:3,id_rel,tel);
