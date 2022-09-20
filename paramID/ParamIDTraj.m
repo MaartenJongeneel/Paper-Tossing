@@ -27,7 +27,10 @@ for ii = 1:length(fn)
         %Get the data from the file
         Mocap = data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
         dt   = 1/double(Mocap.datalog.attr.sample_frequency);   %Timestep of the recording 
-        
+
+        %Get the object info
+        Box = data.(fn{ii}).OBJECT.(ObjStr);
+
         %Get the tranforms of the object
         MH_B = Mocap.POSTPROCESSING.(ObjStr).transforms.ds;      
         
@@ -106,12 +109,12 @@ for ii = 1:length(fn)
             end
             id_rel = id_rel(1);
 
-            figure; plot(Mo_B(3,:,tel)); hold on;
-                plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-                plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-                grid on;
-                pause
-                close all
+%             figure; plot(Mo_B(3,:,tel)); hold on;
+%                 plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+%                 plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+%                 grid on;
+%                 pause
+%                 close all
         end
         %------------- Determine the relative release-pose --------------%
         Mo_B_rel(:,tel) = Mo_B(:,id_rel,tel);
@@ -146,7 +149,7 @@ for ii = 1:length(fn)
     end
 end
 %% Do the Matlab simulations from the release states computed above
-load('box5.mat')
+% load('box5.mat')
 if evalMatlab    
     %Obtain the vectors of mu, eN, and eT for which we run the
     %parameter identification. If evalAlgoryx is true, the vectors for mu1,
@@ -159,7 +162,7 @@ if evalMatlab
         for ip = 1:(length(mu)*length(eN)*length(eT)) %For all parameters 
             %Obtain MATLAB results
             Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
-            [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eNvec(ip),eTvec(ip),muvec(ip),box5,eye(3),zeros(3,1),1/120,Ntimeidx);
+            [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eNvec(ip),eTvec(ip),muvec(ip),Box,eye(3),zeros(3,1),dt,Ntimeidx);
             MH_B_M = cat(3,MH_B_MATLAB{:});
 
             Mo_B_meas = Mo_B(:,id(is,1):id(is,2),is);                %Measured position data

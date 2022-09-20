@@ -49,15 +49,15 @@ AH_B = cell(1,Ntimeidx);
 E  = NaN(1,Ntimeidx);
 
 %% Retrieve info of box struct
-Bp_1 = box.vertices(:,1); Bp_5 = box.vertices(:,5);
-Bp_2 = box.vertices(:,2); Bp_6 = box.vertices(:,6);
-Bp_3 = box.vertices(:,3); Bp_7 = box.vertices(:,7);
-Bp_4 = box.vertices(:,4); Bp_8 = box.vertices(:,8);
+Bp_1 = box.vertices.ds(1,:)'; Bp_5 = box.vertices.ds(5,:)';
+Bp_2 = box.vertices.ds(2,:)'; Bp_6 = box.vertices.ds(6,:)';
+Bp_3 = box.vertices.ds(3,:)'; Bp_7 = box.vertices.ds(7,:)';
+Bp_4 = box.vertices.ds(4,:)'; Bp_8 = box.vertices.ds(8,:)';
 
-B_M_B = box.B_M_B;
+B_M_B = box.inertia.ds;
                            
 %% Wrench acting on body B: expressed in B with orientation of A:
-BA_fo  = [0; 0; -box.mass*g;];
+BA_fo  = [0; 0; -box.mass.ds*g;];
 BA_Tau = [0; 0; 0];
 BA_f   = [BA_fo; BA_Tau];
 
