@@ -80,13 +80,9 @@ for ii = 1:length(fn)
             f = find([false,x]~=[x,false]);
             g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
             id_rest = t(f(2*g-1))+99; % First t followed by >=N_pos consecutive numbers
-            
-            if id_rest > 131
-                [pks,id_rel] = findpeaks(Mo_B(3,id_rest-130:id_rest,tel),'MinPeakHeight',0.12,'MinPeakProminence',0.05,'MinPeakWidth',20);
-                id_rel = id_rel+(id_rest-131);
-            else
-                [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12,'MinPeakProminence',0.05,'MinPeakWidth',20);
-            end  
+    
+            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
+            id_rel = id_rel(end);
                 
             figure; plot(((id_rel-20):id_rest+20)/120,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
                 plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);

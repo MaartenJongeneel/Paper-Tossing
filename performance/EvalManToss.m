@@ -7,7 +7,7 @@ addpath(genpath('readH5')); addpath('data');
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
 %% Load the data
-Data = readH5('211224_ManualTossesBox5.h5');
+Data = readH5('220920_Box005_ManualTosses.h5');
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -29,7 +29,7 @@ Algoryx_eN_sigma = 0.127; %Covariance of eN parameter set (not covariance of mea
 Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
 
 
-ObjStr = "Box006"; %The object for which you want to do paramID
+ObjStr = "Box005"; %The object for which you want to do paramID
 ImpPln = "GroundPlane001";
 %% Loop through the data
 tel = 0;
@@ -39,32 +39,25 @@ for ii = 1:length(fn)
         tel = tel+1;
 
         %Get the data from the file
-        Mocap = data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
+        Mocap = Data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
         dt   = 1/double(Mocap.datalog.attr.sample_frequency);   %Timestep of the recording 
-        %Get the data from the file
-%         Mocap = Data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
-        FH_B = Mocap.POSTPROCESSING.Box5.transforms.ds;
-        FH_C = Mocap.POSTPROCESSING.CS_200.transforms.ds;
         
-        %Get the transform of the Base w.r.t. Motive origin
-        i_bd_Box5_R   = contains(string(Mocap.datalog.ds.Properties.VariableNames),"Box5_R");
-        i_bd_Box5_P   = contains(string(Mocap.datalog.ds.Properties.VariableNames),"Box5_P");
-        
+        %Get the object info
+        Box = Data.(fn{ii}).OBJECT.(ObjStr);
+
+        %Get the tranforms of the object
+        MH_B = Mocap.POSTPROCESSING.(ObjStr).transforms.ds; 
+        FH_C = Mocap.POSTPROCESSING.(ImpPln).transforms.ds;
+
         %Rewrite the data into mat structures
-        Nsamples = length(FH_B);
+        Nsamples = length(MH_B);
         for jj = 1:Nsamples
-%             FH_Bm(:,:,jj) = FH_B{jj};
             FH_Cm(:,:,jj,tel) = FH_C{jj};
-%             CH_Bm(:,:,jj,tel) = FH_C{jj}\FH_B{jj};
-            MH_Bm(:,:,jj,tel) = makehgtform('translate', table2array(Mocap.datalog.ds(jj,i_bd_Box5_P)))* ... %translation
-                quat2tform(table2array(Mocap.datalog.ds(jj,i_bd_Box5_R))); %Rotation
-            MH_Bm(:,:,jj,tel) = [Rx(90) zeros(3,1); zeros(1,3),1]*MH_Bm(:,:,jj,tel);
+            MH_Bm(:,:,jj,tel) = MH_B{jj};
         end
         
         %Few definitions from data:
-%         Fo_B(:,1:length(FH_Bm(1:3,4,:)),tel) = squeeze(FH_Bm(1:3,4,:));
         Fo_C(:,1:length(FH_Cm(1:3,4,:,tel)),tel) = squeeze(FH_Cm(1:3,4,:,tel));
-%         Co_B(:,1:length(CH_Bm(1:3,4,:,tel)),tel) = squeeze(CH_Bm(1:3,4,:,tel));  
         Mo_B(:,1:length(MH_Bm(1:3,4,:,tel)),tel) = squeeze(MH_Bm(1:3,4,:,tel));
 
         
@@ -93,23 +86,16 @@ for ii = 1:length(fn)
         f = find([false,x]~=[x,false]);
         g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
         id_rest = t(f(2*g-1))+99; % First t followed by >=N_pos consecutive numbers
-        
-        if id_rest > 131
-            [pks,id_rel] = findpeaks(Mo_B(3,id_rest-130:id_rest,tel),'MinPeakHeight',0.12,'MinPeakProminence',0.05,'MinPeakWidth',20);
-            id_rel = id_rel+(id_rest-131);
-        else
-            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12,'MinPeakProminence',0.05,'MinPeakWidth',20);
-        end       
-        
-%         figure; plot(((id_rel-20):id_rest+20)/120,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on; 
-%         plot(id_rel/fps,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-%         plot(id_rest/fps,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-%         grid on;
-%         xlim([id_rel-20,id_rest+20]/fps);
-%         xlabel('Time [s]');
-%         ylabel('$(^F\mathbf{o}_B)_z$ [m]');
-%         pause
-%         close all
+
+        [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
+        id_rel = id_rel(end);
+
+            figure; plot(Mo_B(3,:,tel)); hold on;
+                plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+                plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+                grid on;
+                pause
+                close all
         
         %------------- Determine the relative release-pose --------------%
         Mo_B_rel(:,tel) = Mo_B(:,id_rel,tel);
