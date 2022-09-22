@@ -10,8 +10,11 @@ addpath(genpath('readH5')); addpath('data');
 Data = readH5('211224_ManualTossesBox5.h5');
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
-fps      = 120;
-dt       = 1/fps;%Timestep of the recording (I was stupid to not put it on 360..)
+color.Matlab = [237 176 33]/255;
+color.Algoryx = [77 191 237]/255;
+color.Meas = [128 128 128]/255;
+% fps      = 120;
+% dt       = 1/fps;%Timestep of the recording (I was stupid to not put it on 360..)
 N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
 MATLAB_eN = 0.2;%0.35;        %Optimum parameter found for MATLAB Traj = 0.2, Vel = 0.35
@@ -24,17 +27,22 @@ Algoryx_eT = 0;          %Optimum parameter found for Algoryx
 Algoryx_mu = 0.4;        %Optimum parameter found for Algoryx
 Algoryx_eN_sigma = 0.127; %Covariance of eN parameter set (not covariance of mean!)
 Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
-color.Matlab = [237 176 33]/255;
-color.Algoryx = [77 191 237]/255;
-color.Meas = [128 128 128]/255;
+
+
+ObjStr = "Box006"; %The object for which you want to do paramID
+ImpPln = "GroundPlane001";
 %% Loop through the data
 tel = 0;
 fn = fieldnames(Data);
 for ii = 1:length(fn)
     if startsWith(fn{ii},'Rec')
         tel = tel+1;
+
         %Get the data from the file
-        Mocap = Data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
+        Mocap = data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
+        dt   = 1/double(Mocap.datalog.attr.sample_frequency);   %Timestep of the recording 
+        %Get the data from the file
+%         Mocap = Data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
         FH_B = Mocap.POSTPROCESSING.Box5.transforms.ds;
         FH_C = Mocap.POSTPROCESSING.CS_200.transforms.ds;
         
@@ -45,18 +53,18 @@ for ii = 1:length(fn)
         %Rewrite the data into mat structures
         Nsamples = length(FH_B);
         for jj = 1:Nsamples
-            FH_Bm(:,:,jj) = FH_B{jj};
+%             FH_Bm(:,:,jj) = FH_B{jj};
             FH_Cm(:,:,jj,tel) = FH_C{jj};
-            CH_Bm(:,:,jj,tel) = FH_C{jj}\FH_B{jj};
+%             CH_Bm(:,:,jj,tel) = FH_C{jj}\FH_B{jj};
             MH_Bm(:,:,jj,tel) = makehgtform('translate', table2array(Mocap.datalog.ds(jj,i_bd_Box5_P)))* ... %translation
                 quat2tform(table2array(Mocap.datalog.ds(jj,i_bd_Box5_R))); %Rotation
             MH_Bm(:,:,jj,tel) = [Rx(90) zeros(3,1); zeros(1,3),1]*MH_Bm(:,:,jj,tel);
         end
         
         %Few definitions from data:
-        Fo_B(:,1:length(FH_Bm(1:3,4,:)),tel) = squeeze(FH_Bm(1:3,4,:));
+%         Fo_B(:,1:length(FH_Bm(1:3,4,:)),tel) = squeeze(FH_Bm(1:3,4,:));
         Fo_C(:,1:length(FH_Cm(1:3,4,:,tel)),tel) = squeeze(FH_Cm(1:3,4,:,tel));
-        Co_B(:,1:length(CH_Bm(1:3,4,:,tel)),tel) = squeeze(CH_Bm(1:3,4,:,tel));  
+%         Co_B(:,1:length(CH_Bm(1:3,4,:,tel)),tel) = squeeze(CH_Bm(1:3,4,:,tel));  
         Mo_B(:,1:length(MH_Bm(1:3,4,:,tel)),tel) = squeeze(MH_Bm(1:3,4,:,tel));
 
         
@@ -162,10 +170,10 @@ figure('rend','painters','pos',[500 500 500 230]);
 ha = tight_subplot(1,1,[.08 .07],[.16 .05],[0.1 0.03]);  %[gap_h gap_w] [lower upper] [left right]
 axes(ha(1));
     plot(((id(plotnr,1)-20):id(plotnr,2)+20)/120,Mo_B(3,(id(plotnr,1)-20):id(plotnr,2)+20,plotnr)); hold on; 
-    plot(id(plotnr,1)/fps,Mo_B(3,id(plotnr,1),plotnr),'o','markersize',10,'linewidth',2);
-    plot(id(plotnr,2)/fps,Mo_B(3,id(plotnr,2),plotnr),'o','markersize',10,'linewidth',2);
+    plot(id(plotnr,1)*dt,Mo_B(3,id(plotnr,1),plotnr),'o','markersize',10,'linewidth',2);
+    plot(id(plotnr,2)*dt,Mo_B(3,id(plotnr,2),plotnr),'o','markersize',10,'linewidth',2);
     grid on;
-    xlim([id(plotnr,1)-20,id(plotnr,2)+20]/fps);
+    xlim([id(plotnr,1)-20,id(plotnr,2)+20]*dt);
     xlabel('Time [s]');
     ylabel('$(^M\mathbf{o}_B)_z$ [m]');
     X = [0.66 0.81];
@@ -561,10 +569,10 @@ ha1(2).Visible = "off";
 ha(1).Visible = "off"; ha(3).Visible = "off";
 axes(ha1(1));
     plot(((id(plotnr,1)-20):id(plotnr,2)+20)/120,Mo_B(3,(id(plotnr,1)-20):id(plotnr,2)+20,plotnr)); hold on; 
-    plot(id(plotnr,1)/fps,Mo_B(3,id(plotnr,1),plotnr),'o','markersize',10,'linewidth',2);
-    plot(id(plotnr,2)/fps,Mo_B(3,id(plotnr,2),plotnr),'o','markersize',10,'linewidth',2);
+    plot(id(plotnr,1)*dt,Mo_B(3,id(plotnr,1),plotnr),'o','markersize',10,'linewidth',2);
+    plot(id(plotnr,2)*dt,Mo_B(3,id(plotnr,2),plotnr),'o','markersize',10,'linewidth',2);
     grid on;
-    xlim([id(plotnr,1)-5,id(plotnr,2)+20]/fps);
+    xlim([id(plotnr,1)-5,id(plotnr,2)+20]*dt);
     xlabel('Time [s]');
     ylabel('$(^M\mathbf{o}_B)_z$ [m]');
     X = [0.37 0.42];

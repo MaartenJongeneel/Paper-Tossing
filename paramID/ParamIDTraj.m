@@ -158,7 +158,7 @@ if evalMatlab
     eNvec = repmat(repelem(eN,length(mu)),1,length(eT));
     eTvec = repelem(eT,length(mu)*length(eN));
 
-    for is = 5:tel
+    for is = 1:tel
         for ip = 1:(length(mu)*length(eN)*length(eT)) %For all parameters 
             %Obtain MATLAB results
             Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
