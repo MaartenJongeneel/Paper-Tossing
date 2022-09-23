@@ -7,7 +7,7 @@ addpath(genpath('readH5')); addpath('data');
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
 %% Load the data
-Data = readH5('220920_Box005_ManualTosses.h5');
+Data = readH5('220920_Box006_Validation.h5');
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -17,20 +17,25 @@ color.Meas = [128 128 128]/255;
 % dt       = 1/fps;%Timestep of the recording (I was stupid to not put it on 360..)
 N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
-MATLAB_eN = 0.2;%0.35;        %Optimum parameter found for MATLAB Traj = 0.2, Vel = 0.35
-MATLAB_eT = 0;           %Optimum parameter found for MATLAB
-MATLAB_mu = 0.4;%0.45;        %Optimum parameter found for MATLAB Traj = 0.4, Vel = 0.45
+MATLAB.Box005.vel   = [0.45 0.35 0.00]; %mu eN eT
+MATLAB.Box005.traj  = [0.40 0.20 0.00]; %mu eN eT
+MATLAB.Box006.vel   = [0.30 0.45 0.00]; %mu eN eT 
+MATLAB.Box006.traj  = [0.40 0.25 0.00]; %mu eN eT
+Algoryx.Box005.vel  = [0.40 0.30 0.00]; %mu eN eT
+Algoryx.Box005.traj = []; %mu eN eT
+Algoryx.Box006.vel  = [0.25 0.40 0.00]; %mu eN eT 
+Algoryx.Box006.traj = []; %mu eN eT
+
+
 MATLAB_eN_sigma = 0.125; %Covariance of eN parameter set (not covariance of mean!)
 MATLAB_mu_sigma = 0.124; %Covariance of mu parameter set (not covariance of mean!)
-Algoryx_eN = 0.3;        %Optimum parameter found for Algoryx
-Algoryx_eT = 0;          %Optimum parameter found for Algoryx
-Algoryx_mu = 0.4;        %Optimum parameter found for Algoryx
 Algoryx_eN_sigma = 0.127; %Covariance of eN parameter set (not covariance of mean!)
 Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
 
 
-ObjStr = "Box005"; %The object for which you want to do paramID
+ObjStr = "Box006"; %The object for which you want to do paramID
 ImpPln = "GroundPlane001";
+Param = "traj";  %Trajectory based parameters are tested 
 %% Loop through the data
 tel = 0;
 fn = fieldnames(Data);
@@ -78,17 +83,21 @@ for ii = 1:length(fn)
 
             
         %--------------- Determine the moment of release ----------------%
-        %Find the peaks of the position data (height) to find when the box
-        %is released from the hand
-        
-        t = find(vecnorm(dMo_B(:,100:end))<0.02); %Find the indices where difference in rel. pos. is small
-        x = diff(t)==1;
-        f = find([false,x]~=[x,false]);
-        g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
-        id_rest = t(f(2*g-1))+99; % First t followed by >=N_pos consecutive numbers
-
-        [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
-        id_rel = id_rel(end);
+        %Find the peaks of the position data (height) to find when the box is released from the hand
+            t = find(vecnorm(dMo_B(:,150:end))<0.02); %Find the indices where difference in rel. pos. is small
+            x = diff(t)==1;
+            f = find([false,x]~=[x,false]);
+            g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
+            id_rest = t(f(2*g-1))+149; % First t followed by >=N_pos consecutive numbers
+        if ObjStr == "Box005"
+            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
+            id_rel = id_rel(end);
+        elseif ObjStr == "Box006"
+            if isempty(id_rest); id_rest = 700; end %If due to noise we cannot get the rest index 
+            [pks,id_rel] = findpeaks(Mo_B(3,100:end,tel),'MinPeakHeight',0.08,'MinPeakWidth',10);
+            id_rel = id_rel+99;            
+            id_rel = id_rel(1);
+        end
 
             figure; plot(Mo_B(3,:,tel)); hold on;
                 plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
@@ -181,11 +190,10 @@ axes(ha(1));
     end
 
 %% Do the Matlab simulations of propagating the mean
-load('box5.mat')
 for is = 1:tel
     %Obtain MATLAB results
     Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
-    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB_eN,MATLAB_eT,MATLAB_mu,box5,eye(3),zeros(3,1),1/120,Ntimeidx);
+    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB.(ObjStr).(Param)(2),MATLAB.(ObjStr).(Param)(3),MATLAB.(ObjStr).(Param)(1),Box,eye(3),zeros(3,1),dt,Ntimeidx);
     for ii = 1:length(MH_B_MATLAB)
     MH_B_Matlab(:,:,ii,is) = MH_B_MATLAB{ii};
     end
