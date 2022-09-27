@@ -7,24 +7,23 @@ addpath(genpath('readH5')); addpath('data');
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
 %% Load the data
-Data = readH5('220920_Box006_Validation.h5');
+data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
+% data = readH5('220920_Box005_ManualTosses.h5'); %Validation of Box005
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
 color.Algoryx = [77 191 237]/255;
 color.Meas = [128 128 128]/255;
-% fps      = 120;
-% dt       = 1/fps;%Timestep of the recording (I was stupid to not put it on 360..)
 N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
-MATLAB.Box005.vel   = [0.45 0.35 0.00]; %mu eN eT
-MATLAB.Box005.traj  = [0.40 0.20 0.00]; %mu eN eT
-MATLAB.Box006.vel   = [0.30 0.45 0.00]; %mu eN eT 
-MATLAB.Box006.traj  = [0.40 0.25 0.00]; %mu eN eT
-Algoryx.Box005.vel  = [0.40 0.30 0.00]; %mu eN eT
-Algoryx.Box005.traj = []; %mu eN eT
-Algoryx.Box006.vel  = [0.25 0.40 0.00]; %mu eN eT 
-Algoryx.Box006.traj = []; %mu eN eT
+MATLAB.Box005.vel   = [0.35 0.00 0.45]; %eN eT mu
+MATLAB.Box005.traj  = [0.20 0.00 0.40]; %eN eT mu
+MATLAB.Box006.vel   = [0.45 0.00 0.30]; %eN eT mu 
+MATLAB.Box006.traj  = [0.25 0.00 0.40]; %eN eT mu
+Algoryx.Box005.vel  = [0.30 0.00 0.40]; %eN eT mu
+Algoryx.Box005.traj = []; %eN eT mu
+Algoryx.Box006.vel  = [0.40 0.00 0.25]; %eN eT mu 
+Algoryx.Box006.traj = []; %eN eT mu
 
 
 MATLAB_eN_sigma = 0.125; %Covariance of eN parameter set (not covariance of mean!)
@@ -35,20 +34,20 @@ Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mea
 
 ObjStr = "Box006"; %The object for which you want to do paramID
 ImpPln = "GroundPlane001";
-Param = "traj";  %Trajectory based parameters are tested 
+Param = "vel";  %Trajectory based parameters are tested 
 %% Loop through the data
 tel = 0;
-fn = fieldnames(Data);
+fn = fieldnames(data);
 for ii = 1:length(fn)
     if startsWith(fn{ii},'Rec')
         tel = tel+1;
 
         %Get the data from the file
-        Mocap = Data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
+        Mocap = data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
         dt   = 1/double(Mocap.datalog.attr.sample_frequency);   %Timestep of the recording 
         
         %Get the object info
-        Box = Data.(fn{ii}).OBJECT.(ObjStr);
+        Box = data.(fn{ii}).OBJECT.(ObjStr);
 
         %Get the tranforms of the object
         MH_B = Mocap.POSTPROCESSING.(ObjStr).transforms.ds; 
@@ -99,12 +98,12 @@ for ii = 1:length(fn)
             id_rel = id_rel(1);
         end
 
-            figure; plot(Mo_B(3,:,tel)); hold on;
-                plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-                plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-                grid on;
-                pause
-                close all
+%             figure; plot(Mo_B(3,:,tel)); hold on;
+%                 plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+%                 plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+%                 grid on;
+%                 pause
+%                 close all
         
         %------------- Determine the relative release-pose --------------%
         Mo_B_rel(:,tel) = Mo_B(:,id_rel,tel);
@@ -164,21 +163,21 @@ plotnr = 1;
 figure('rend','painters','pos',[500 500 500 230]);
 ha = tight_subplot(1,1,[.08 .07],[.16 .05],[0.1 0.03]);  %[gap_h gap_w] [lower upper] [left right]
 axes(ha(1));
-    plot(((id(plotnr,1)-20):id(plotnr,2)+20)/120,Mo_B(3,(id(plotnr,1)-20):id(plotnr,2)+20,plotnr)); hold on; 
+    plot(((id(plotnr,1)-20):id(plotnr,2)+20)*dt,Mo_B(3,(id(plotnr,1)-20):id(plotnr,2)+20,plotnr)); hold on; 
     plot(id(plotnr,1)*dt,Mo_B(3,id(plotnr,1),plotnr),'o','markersize',10,'linewidth',2);
     plot(id(plotnr,2)*dt,Mo_B(3,id(plotnr,2),plotnr),'o','markersize',10,'linewidth',2);
     grid on;
     xlim([id(plotnr,1)-20,id(plotnr,2)+20]*dt);
     xlabel('Time [s]');
     ylabel('$(^M\mathbf{o}_B)_z$ [m]');
-    X = [0.66 0.81];
-    Y = [0.44 0.24];
+    X = [0.74 0.89];
+    Y = [0.47 0.27];
     annotation('arrow',X,Y);
-    text(1.68,0.11,'Moment of rest','Fontsize',12);
-    X = [0.45 0.28];
-    Y = [0.74 0.83];
+    text(1.5,0.095,'Moment of rest','Fontsize',12);
+    X = [0.36 0.19];
+    Y = [0.81 0.90];
     annotation('arrow',X,Y);
-    text(1.6,0.158,'Moment of release','Fontsize',12);
+    text(1.26,0.138,'Moment of release','Fontsize',12);
     f = gcf;
 %     print(gcf,'Rest-Release.png','-dpng','-r500'); %Uncomment if you want to save this image
     if doSave
@@ -193,7 +192,7 @@ axes(ha(1));
 for is = 1:tel
     %Obtain MATLAB results
     Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
-    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB.(ObjStr).(Param)(2),MATLAB.(ObjStr).(Param)(3),MATLAB.(ObjStr).(Param)(1),Box,eye(3),zeros(3,1),dt,Ntimeidx);
+    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB.(ObjStr).(Param)(1),MATLAB.(ObjStr).(Param)(2),MATLAB.(ObjStr).(Param)(3),Box,eye(3),zeros(3,1),dt,Ntimeidx);
     for ii = 1:length(MH_B_MATLAB)
     MH_B_Matlab(:,:,ii,is) = MH_B_MATLAB{ii};
     end
@@ -260,9 +259,9 @@ figure('rend','painters','pos',[500 500 300 260]);
     ha = tight_subplot(1,1,[.08 .07],[.1 .08],[0.17 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     for ii =1:tel
-    Ptrans = MH_B_rest(:,:,ii)*[box5.vertices;ones(1,8)];
-    PtransM = MH_B_restM(:,:,ii)*[box5.vertices;ones(1,8)];
-%     PtransA = MH_B_restAGX(:,:,ii)*[box5.vertices;ones(1,8)];
+    Ptrans = MH_B_rest(:,:,ii)*[Box.vertices.ds';ones(1,8)];
+    PtransM = MH_B_restM(:,:,ii)*[Box.vertices.ds';ones(1,8)];
+%     PtransA = MH_B_restAGX(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     x1 = [Ptrans(1,1:4) Ptrans(1,1)];
     y1 = [Ptrans(2,1:4) Ptrans(2,1)];
     x2 = [PtransM(1,1:4) PtransM(1,1)];
@@ -297,30 +296,30 @@ figure('rend','painters','pos',[500 500 150 195]);
     ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.25 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     for ii =1:tel
-    Ptrans = MH_B_rest(:,:,ii)*[box5.vertices;ones(1,8)];
-    PtransM = MH_B_restM(:,:,ii)*[box5.vertices;ones(1,8)];
-    PtransA = MH_B_restAGX(:,:,ii)*[box5.vertices;ones(1,8)];
+    Ptrans = MH_B_rest(:,:,ii)*[Box.vertices.ds';ones(1,8)];
+    PtransM = MH_B_restM(:,:,ii)*[Box.vertices.ds';ones(1,8)];
+%     PtransA = MH_B_restAGX(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     x1 = [Ptrans(1,1:4) Ptrans(1,1)];
     y1 = [Ptrans(2,1:4) Ptrans(2,1)];
     x2 = [PtransM(1,1:4) PtransM(1,1)];
     y2 = [PtransM(2,1:4) PtransM(2,1)];
-    x3 = [PtransA(1,1:4) PtransA(1,1)];
-    y3 = [PtransA(2,1:4) PtransA(2,1)];
+%     x3 = [PtransA(1,1:4) PtransA(1,1)];
+%     y3 = [PtransA(2,1:4) PtransA(2,1)];
     
     fill(x1,y1,color.Meas); %Measured box 
     grid on; hold on;
     fill(x2,y2,color.Matlab);      %Matlab box
-    fill(x3,y3,color.Algoryx); %AGX box
+%     fill(x3,y3,color.Algoryx); %AGX box
     xlabel('$(^M\mathbf{o}_B)_x$');
     ylabel('$(^M\mathbf{o}_B)_y$');
     axis equal
-    axis([0 0.7 -0.7 0.3]);
+    axis([-0.2 0.5 -0.1 0.9]);
     if doSave
         fig = gcf;
         fig.PaperPositionMode = 'auto';
         fig_pos = fig.PaperPosition;
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/RestPose/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector')
+        print(fig,append('figures/RestPose/',ObjStr,'_',Param,'/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector')
     end
 %     pause();
     hold off;
@@ -406,19 +405,19 @@ figure('rend','painters','pos',[500 500 300 250]);
 %% Compute the errors of the rest-orientation and rest-position
 for ii =1:tel
     E_rot_M(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restM(1:3,1:3,ii)));
-    E_rot_A(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX(1:3,1:3,ii)));
+%     E_rot_A(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX(1:3,1:3,ii)));
     E_pos_M(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restM(1:3,4,ii))';
-    E_pos_A(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
-    E_pos_M_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restM_P(1:3,4,:,ii))),2))';
-    E_pos_A_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restAGX_P(1:3,4,:,ii))),2))';
+%     E_pos_A(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
+%     E_pos_M_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restM_P(1:3,4,:,ii))),2))';
+%     E_pos_A_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restAGX_P(1:3,4,:,ii))),2))';
 end
 
 e_pos_M = norm(mean(abs(E_pos_M(:,1:2))));
 e_rot_M = mean(abs(E_rot_M(:,1)));
-e_pos_A = norm(mean(abs(E_pos_A(:,1:2))));
-e_rot_A = mean(abs(E_rot_A(:,1)));
-e_pos_M_P = norm(mean(abs(E_pos_M_P(:,1:2))));
-e_pos_A_P = norm(mean(abs(E_pos_A_P(:,1:2))));
+% e_pos_A = norm(mean(abs(E_pos_A(:,1:2))));
+% e_rot_A = mean(abs(E_rot_A(:,1)));
+% e_pos_M_P = norm(mean(abs(E_pos_M_P(:,1:2))));
+% e_pos_A_P = norm(mean(abs(E_pos_A_P(:,1:2))));
 
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface
@@ -432,16 +431,16 @@ spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to positio
 plotnr = 1;
 %Plot the trajectory of the box
 figure('pos',[500 500 500 300]);
-    for ii=id(plotnr,1):1:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1
+    for ii=id(plotnr,1):5:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1
         
         %plot Measured box
-        g1 = plotBox(MH_Bm(:,:,ii,plotnr),box5,color.Meas,0);hold on;
+        g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,color.Meas,0);hold on;
         
         %Plot MATLAB box
-        g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),box5,color.Matlab,0); hold on;     
+        g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Matlab,0); hold on;     
 
         %Plot new AGX box results
-        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),box5,color.Algoryx,0);hold on;
+%         g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),box5,color.Algoryx,0);hold on;
 
         %Plot the conveyor C
         table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
@@ -465,11 +464,11 @@ figure('pos',[500 500 500 300]);
         ylabel('y [m]');
         zlabel('z [m]');
 %         view(-118,16);
-        view(-118,27);
-%         view(-174,23);
+%         view(-118,27);
+        view(-315,31);
 %         view(-90,0);
         text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
-        L1 = legend([g1 g2 g3],'Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
+        L1 = legend([g1 g2 ],'Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
         L1.Position(2) = 0.90;
         L1.Position(1) = 0.52-(L1.Position(3)/2);
         drawnow
@@ -488,33 +487,31 @@ FR_C = eye(3);
 Fo_C = zeros(3,1);
 spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
 
-plotnr = 39;
+plotnr = 11;
 %Plot the trajectory of the box
-figure('rend','painters','pos',[50 50 500 300]);
-    ha = tight_subplot(1,1,[.08 .07],[.01 .01],[0.03 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+figure('pos',[50 50 400 200]);
+    ha = tight_subplot(1,1,[.08 .07],[.01 -.3],[0.03 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     %Plot the conveyor C
     table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
     set(table3,'FaceColor',[56 53 48]/255,'FaceAlpha',1);
     
     %plot Measured box
-    for ii=id(plotnr,1):8:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1        
-        g1 = plotBox(MH_Bm(:,:,ii,plotnr),box5,[194 135 43]/255,0);hold on;   
+    for ii=id(plotnr,1):18:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1        
+        g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,[194 135 43]/255,0);hold on;   
         drawnow
     end
 
     %Other plot options
     axis equal;
-    axis([-0.2 0.8 -0.6 0.8 -0.05 0.3]);
+    axis([-0.4 0.6 -1 0.4 -0.05 0.3]);
     view(-118,27);
+    camproj('perspective')
     axis off;
 
     if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'figures/Measured_box_trajectory_2.pdf','-dpdf','-vector')
+        f = gcf;
+        exportgraphics(f,'figures/Measured_box_trajectory_2.png','Resolution',1500);
     end
 
 %% Plot impact sequence over time (Figure 1 of paper) based on Sander data
@@ -527,8 +524,13 @@ FR_C = eye(3);
 Fo_C = zeros(3,1);
 spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
 
+dataSander = load('data.mat');
+MH_B_sander = dataSander.data.POSTPROCESSING.Box006.transforms.ds;
+for jj = 1:length(MH_B_sander); MH_Bm_sander(:,:,jj) = MH_B_sander{jj}; end
+T = [Rx(90) zeros(3,1);zeros(1,3) 1];
+
 plotnr = 10;
-fig = figure('rend','painters','pos',[200 200 7*380 7*150]);
+fig = figure('pos',[200 200 2*380 2*150]);
     ha = tight_subplot(1,1,[.08 .07],[-0.1 -.5],[0.01 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
 
@@ -537,20 +539,17 @@ fig = figure('rend','painters','pos',[200 200 7*380 7*150]);
     set(table3,'FaceColor',[56 53 48]/255,'FaceAlpha',1);
 
     for ii = [2050 2314 2355 2381 2397 2600]
-    plotBox(T*cat(3,MH_Bm_sander(:,:,ii)),box5,[194 135 43]/255,0);
-    drawnow;
-    end
-    axis off;
+        plotBox(T*cat(3,MH_Bm_sander(:,:,ii)),Box,[194 135 43]/255,0);
+        drawnow;
+    end    
     camproj('perspective')
-    grid on;axis equal;
+    grid on; axis equal; axis off;
     view(-124,15);
     axis([-0.2 0.6 -0.7 0.7 0 0.5]);
+
     if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'figures/ImpactSequence.pdf','-dpdf','-vector')
+        f = gcf;
+        exportgraphics(f,'figures/ImpactSequence.png','Resolution',1500);
     end
       
 %% FOR THE POSTER

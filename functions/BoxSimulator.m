@@ -30,8 +30,8 @@ function [AH_B, BV_AB, FN, FT] = BoxSimulator(releasePosition,releaseOrientation
 %            FT                  : Tangential force acting on the box over time
 %% Constants and settings
 g     = 9.81;              %Gravitational acceleration              [m/s^2]
-a     = 0.0001;              %Prox point auxilary parameter           [-]
-tol   = 1e-6;              %Error tol for fixed-point               [-]
+a     = 0.00005;              %Prox point auxilary parameter           [-]
+tol   = 1e-7;              %Error tol for fixed-point               [-]
 Cz_C  = [0;0;1];           %z-component of the C frame              [-]
 Cy_C  = [0;1;0];           %y-component of the C frame              [-]
 Cx_C  = [1;0;0];           %x-component of the C frame              [-]

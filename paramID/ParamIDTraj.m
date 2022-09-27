@@ -32,24 +32,14 @@ for ii = 1:length(fn)
         Box = data.(fn{ii}).OBJECT.(ObjStr);
 
         %Get the tranforms of the object
-        MH_B = Mocap.POSTPROCESSING.(ObjStr).transforms.ds;      
-        
-%         % Get the contact plane transforms
-%         if isfield(Mocap.POSTPROCESSING, ImpPln)
-%             try
-%                 MH_C = Mocap.POSTPROCESSING.(ImpPln).transforms.ds';
-%             catch
-%                 error(append("Can't get the data from object",ImpPln));
-%             end
-%         else
-%             %Take the motive frame as the impact plane frame with zero velocity
-%             MH_C = repmat({eye(4)},1,Nsamples);
-%         end
-               
+        MH_B = Mocap.POSTPROCESSING.(ObjStr).transforms.ds;  
+        MH_C = Mocap.POSTPROCESSING.ConveyorPart006.transforms.ds;
+                      
         %Rewrite the data into mat structures
         Nsamples = length(MH_B);
         for jj = 1:Nsamples
             MH_Bm(:,:,jj,tel) = MH_B{jj};
+            MH_Cm(:,:,jj,tel) = MH_C{jj};
         end
         
         %Few definitions from data:
@@ -73,14 +63,13 @@ for ii = 1:length(fn)
             
         %--------------- Determine the moment of release ----------------%
         %Find the peaks of the position data (height) to find when the box is released from the hand
+        t = find(vecnorm(dMo_B(:,170:end))<0.02); %Find the indices where difference in rel. pos. is small
+        x = diff(t)==1;
+        f = find([false,x]~=[x,false]);
+        g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
+        id_rest = t(f(2*g-1))+169; % First t followed by >=N_pos consecutive numbers
         
-        if ObjStr == "Box005"
-            t = find(vecnorm(dMo_B(:,100:end))<0.02); %Find the indices where difference in rel. pos. is small
-            x = diff(t)==1;
-            f = find([false,x]~=[x,false]);
-            g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
-            id_rest = t(f(2*g-1))+99; % First t followed by >=N_pos consecutive numbers
-    
+        if ObjStr == "Box005"    
             [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
             id_rel = id_rel(end);
                 
@@ -96,10 +85,10 @@ for ii = 1:length(fn)
         end
 
         if ObjStr == "Box006"
-            id_rest = 1000;
+            if isempty(id_rest) || id_rest> 900; id_rest = 900; end
 
-            [pks,id_rel] = findpeaks(Mo_B(3,id_rest-800:id_rest,tel),'MinPeakHeight',0.105,'MinPeakWidth',10);
-            id_rel = id_rel+(id_rest-801);            
+            [pks,id_rel] = findpeaks(Mo_B(3,200:end,tel),'MinPeakHeight',0.105,'MinPeakWidth',10);
+            id_rel = id_rel+199;            
             if isempty(id_rel)
                 id_rel = find(dMo_B(3,:)==min(dMo_B(3,:)))-50;
             end
@@ -112,6 +101,7 @@ for ii = 1:length(fn)
 %                 pause
 %                 close all
         end
+        
         %------------- Determine the relative release-pose --------------%
         Mo_B_rel(:,tel) = Mo_B(:,id_rel,tel);
         MR_B_rel(:,:,tel) = MH_Bm(1:3,1:3,id_rel,tel);
@@ -139,7 +129,8 @@ for ii = 1:length(fn)
             rmean = mean(rpoints,2);
         end
         MR_B_rest(:,:,tel) = Rmean*expm(hat(rmean));
-        MH_B_rest(:,:,tel) = [MR_B_rest(:,:,tel), Mo_B_rest(:,tel); zeros(1,3),1];    
+        MH_B_rest(:,:,tel) = [MR_B_rest(:,:,tel), Mo_B_rest(:,tel); zeros(1,3),1];  
+        MH_Ca(:,:,tel) = MH_Cm(:,:,1,tel);
         
         id(tel,:) = [id_rel,id_rest];
     end
@@ -158,7 +149,7 @@ if evalMatlab
         for ip = 1:(length(mu)*length(eN)*length(eT)) %For all parameters 
             %Obtain MATLAB results
             Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
-            [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eNvec(ip),eTvec(ip),muvec(ip),Box,eye(3),zeros(3,1),dt,Ntimeidx);
+            [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eNvec(ip),eTvec(ip),muvec(ip),Box,MH_Ca(1:3,1:3,tel),MH_Ca(1:3,4,tel),dt,Ntimeidx);
             MH_B_M = cat(3,MH_B_MATLAB{:});
 
             Mo_B_meas = Mo_B(:,id(is,1):id(is,2),is);                %Measured position data
