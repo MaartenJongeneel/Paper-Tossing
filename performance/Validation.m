@@ -8,7 +8,7 @@ addpath(genpath('readH5')); addpath('data');
 %tossed manually on an idle conveyor.
 %% Load the data
 data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
-% data = readH5('220920_Box005_ManualTosses.h5'); %Validation of Box005
+% data = readH5('220920_Box005_Validation.h5'); %Validation of Box005
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
