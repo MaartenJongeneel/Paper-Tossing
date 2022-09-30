@@ -7,8 +7,8 @@ addpath(genpath('readH5')); addpath('data');
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
 %% Load the data
-data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
-% data = readH5('220920_Box005_Validation.h5'); %Validation of Box005
+% data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
+data = readH5('220920_Box005_Validation.h5'); %Validation of Box005
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -17,7 +17,7 @@ color.Meas = [128 128 128]/255;
 N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
 MATLAB.Box005.vel   = [0.35 0.00 0.45]; %eN eT mu
-MATLAB.Box005.traj  = [0.20 0.00 0.40]; %eN eT mu
+MATLAB.Box005.traj  = [0.10 0.00 0.45]; %eN eT mu
 MATLAB.Box006.vel   = [0.45 0.00 0.30]; %eN eT mu 
 MATLAB.Box006.traj  = [0.25 0.00 0.40]; %eN eT mu
 Algoryx.Box005.vel  = [0.30 0.00 0.40]; %eN eT mu
@@ -32,7 +32,7 @@ Algoryx_eN_sigma = 0.127; %Covariance of eN parameter set (not covariance of mea
 Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
 
 
-ObjStr = "Box006"; %The object for which you want to do paramID
+ObjStr = "Box005"; %The object for which you want to do paramID
 ImpPln = "GroundPlane001";
 Param = "vel";  %Trajectory based parameters are tested 
 %% Loop through the data
@@ -293,7 +293,7 @@ figure('rend','painters','pos',[500 500 300 260]);
     end
 %% Plot the results of the single Matlab + AGX simulation in smaller figure
 figure('rend','painters','pos',[500 500 150 195]);
-    ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.25 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     for ii =1:tel
     Ptrans = MH_B_rest(:,:,ii)*[Box.vertices.ds';ones(1,8)];
@@ -313,7 +313,8 @@ figure('rend','painters','pos',[500 500 150 195]);
     xlabel('$(^M\mathbf{o}_B)_x$');
     ylabel('$(^M\mathbf{o}_B)_y$');
     axis equal
-    axis([-0.2 0.5 -0.1 0.9]);
+    axis([-0.1 0.6 -0.1 0.9]); %Box006
+%     axis([0 0.7 -0.7 0.3]); %Box005
     if doSave
         fig = gcf;
         fig.PaperPositionMode = 'auto';
@@ -321,7 +322,7 @@ figure('rend','painters','pos',[500 500 150 195]);
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/RestPose/',ObjStr,'_',Param,'/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector')
     end
-%     pause();
+    pause();
     hold off;
     end
 %% Plot results of the multiple Matlab simulations (varying parameters)

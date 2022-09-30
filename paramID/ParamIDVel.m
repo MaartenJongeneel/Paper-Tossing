@@ -13,10 +13,10 @@ close all; set(groot,'defaulttextinterpreter','latex'); set(groot,'defaultAxesTi
 
 %% ------------------------------ Settings ------------------------------%%
 %These will be input parsers to a function
-Object = 'Box006';
+Object = 'Box005';
 Environment = "Conveyor002";  %Select what conveyor you want to consider
-impact_data = "paramID/impact_data/220428_Box006_impacts.mat";
-AGXResult_h5file = "paramID/AGX_results/Box006_paramID/BoxImpactBox006_BoxTossBatch_result.hdf5";
+impact_data = append('paramID/',Object,'_Vel/',Object,'_impacts.mat');
+AGXResult_h5file = append('paramID/',Object,'_Vel/',Object,'_AGX_Batch_result.hdf5');
 evalAlgoryx = true;
 evalMatlab = true;
 evalMuJoCo = false;
@@ -76,7 +76,7 @@ for is = 1:maxImpactEvel
     MH_C_rel(:,:,imp_sel(is)) = impacts.MH_C{imp_sel(is),6}; %Take MH_C at the moment of impact (=index 6)
 end
 
-writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_C_rel(1:3,1:3,:),MH_C_rel(1:3,4,:),'paramID/AGX_init_states');
+writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_C_rel(1:3,1:3,:),MH_C_rel(1:3,4,:),append('paramID/',Object,'_Vel/'));
 
 %% Write the release states to CSV file for MuJoCO simulations
 writeMuJoCoStates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel)
