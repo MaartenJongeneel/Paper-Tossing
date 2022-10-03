@@ -13,11 +13,11 @@ close all; set(groot,'defaulttextinterpreter','latex'); set(groot,'defaultAxesTi
 
 %% ------------------------------ Settings ------------------------------%%
 %These will be input parsers to a function
-Object = 'Box005';
+Object = 'Box006';
 Environment = "Conveyor002";  %Select what conveyor you want to consider
 impact_data = append('paramID/',Object,'_Vel/',Object,'_impacts.mat');
 AGXResult_h5file = append('paramID/',Object,'_Vel/',Object,'_AGX_Batch_result.hdf5');
-evalAlgoryx = true;
+evalAlgoryx = false;
 evalMatlab = true;
 evalMuJoCo = false;
 
@@ -41,9 +41,9 @@ color.Red = [0.8500 0.3250 0.0980];
 color.GreenLight = [0.4660 0.6740 0.1880 0.5];
 color.BlueLight = [0 0.4470 0.7410 0.5];
 color.RedLight = [0.8500 0.3250 0.0980 0.5];
-color.Matlab = [31 62 77]/255;
-color.Algoryx = [187 123 59]/255;
-color.Meas = [135 134 132]/255;
+color.Matlab = [237 176 33]/255;
+color.Algoryx = [77 191 237]/255;
+color.Meas = [128 128 128]/255;
 
 %% ----------- Load the data and evalute the function inputs ----------- %%
 %Load the impacts.mat file as used for Algoryx/Matlab/MuJoCo simulations
@@ -172,14 +172,16 @@ if evalMatlab
         MH_C       = impacts.MH_C(imp_sel(is),:);
         MR_C       = MH_C{6}(1:3,1:3); %Take rotation at moment of impact
         Mo_C       = MH_C{6}(1:3,4);   %Take position at moment of impact
+
+        indx_c = impacts.indx(imp_sel(is),4) - impacts.indx(imp_sel(is),2)+6;
         
         %Load box parameters
-        box.B_M_B = impacts.box.M{imp_sel(is)};    %Inertia tensor
-        box.vertices = impacts.box.V{imp_sel(is)}; %Vertices
-        box.mass = impacts.box.M{imp_sel(is)}(1);  %Mass
+        box.inertia.ds = impacts.box.M{imp_sel(is)};    %Inertia tensor
+        box.vertices.ds = impacts.box.V{imp_sel(is)}'; %Vertices
+        box.mass.ds = impacts.box.M{imp_sel(is)}(1);  %Mass
         
         %Vertices
-        Bp = box.vertices;
+        Bp = box.vertices.ds';
                         
         for ip = 1:(length(mu)*length(eN)*length(eT)) %For all parameters   
             %Run the Matlab simulation
@@ -298,7 +300,7 @@ if evalAlgoryx
 end
 
 %Select the indices that indicate the time of pre- and post-impact velocity
-is = 136;
+is = 119; %is = 136; %Box006
 Ib = impacts.indx(imp_sel(is),3) - impacts.indx(imp_sel(is),2);
 Ic = impacts.indx(imp_sel(is),4) - impacts.indx(imp_sel(is),2);
 
@@ -931,13 +933,13 @@ figure('pos',[pp{2,3} 319 150]);
     for ii=1:endframe
         
         %plot Measured box
-        plotBox(MH_B_meas{ii},box,color.Meas);hold on;
+        plotBox(MH_B_meas{ii},box,color.Meas,0);hold on;
         
         %Plot MATLAB box
-        plotBox(MH_B_M(:,:,ii,optMATLAB_idx),box,color.Matlab); hold on;     
+        plotBox(MH_B_M(:,:,ii,optMATLAB_idx),box,color.Matlab,0); hold on;     
 
         %Plot new AGX box results
-        plotBox(MH_B_AGX(:,:,ii,optAGX_idx),box,color.Algoryx);hold on;
+        plotBox(MH_B_AGX(:,:,ii,optAGX_idx),box,color.Algoryx,0);hold on;
                 
         %Plot the conveyor C
         table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;

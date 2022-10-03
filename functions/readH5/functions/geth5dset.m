@@ -51,19 +51,19 @@ for id = 1:length(dsets)
     %% Write data to struct
     % If the dataset contains attrs, transfer them to struct
     if ~isempty(dset.Attributes)
-%         if length(dset.Name) == 1
-%             StrName = append('Result_0000',dset.Name);
-%         elseif length(dset.Name) == 2
-%             StrName = append('Result_000',dset.Name);
-%         elseif length(dset.Name) == 3
-%             StrName = append('Result_00',dset.Name);
-%         elseif length(dset.Name) == 4
-%             StrName = append('Result_0',dset.Name);
-%         elseif length(dset.Name) == 5
-%             StrName = append('Result_',dset.Name);
-%         else 
+        if length(dset.Name) == 1
+            StrName = append('Result_0000',dset.Name);
+        elseif length(dset.Name) == 2
+            StrName = append('Result_000',dset.Name);
+        elseif length(dset.Name) == 3
+            StrName = append('Result_00',dset.Name);
+        elseif length(dset.Name) == 4
+            StrName = append('Result_0',dset.Name);
+        elseif length(dset.Name) == 5
+            StrName = append('Result_',dset.Name);
+        else 
             StrName = dset.Name;
-%         end
+        end
         data.(StrName).ds = val;                          % Transfer dataset
         data.(StrName).attr = geth5attr(dset.Attributes); % Transfer attributes
     else

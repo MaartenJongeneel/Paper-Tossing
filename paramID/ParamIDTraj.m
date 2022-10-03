@@ -6,14 +6,16 @@ addpath(genpath('readH5')); addpath('data');
 % long-horizon tosses and find the parameters that minimize the error in
 % position and orientation over the full trajectory
 %% Load the data
-% data = readH5('220920_Box005_ParamID_Traj.h5');
-data = readH5('220920_Box006_ParamID_Traj.h5');
+data = readH5('220920_Box005_ParamID_Traj.h5');
+% data = readH5('220920_Box006_ParamID_Traj.h5');
+
 %% Constants
 mu    = 0:0.05:1;  %Define the parameter range of mu for which you want to run simulations
 eN    = 0:0.05:1;  %Define the parameter range of eN for which you want to run simulations
 eT = 0;            %Define the parameter range of eT for which you want to run simulations
 N_pos = 20;        %Number of consecutive points where the error is low
 th_Rmean = 1e-5;   %Threshold rotation mean
+evalAlgoryx = true;
 evalMatlab = true;
 doSave = false;
 
@@ -21,8 +23,16 @@ color.Matlab = [237 176 33]/255;
 color.Algoryx = [77 191 237]/255;
 color.Meas = [128 128 128]/255;
 
-ObjStr = "Box006"; %The object for which you want to do paramID
-ImpPln = "ConveyorPart001"; %"ConveyorPart001GroundPlane001";
+ObjStr = "Box005"; %The object for which you want to do paramID
+ImpPln = "GroundPlane001"; %"ConveyorPart001 GroundPlane001";
+
+%% If Algoryx is used, load the simulation results
+AGXResult_h5file = append('paramID/',ObjStr,'_Traj/',ObjStr,'_ParamID_Traj_BoxTossBatch_result.hdf5');
+
+if evalAlgoryx    
+    AGXData = readH5(AGXResult_h5file);
+    Results = orderfields(AGXData.box);
+end
 %% Loop through the data
 tel = 0;
 fn = fieldnames(data);
@@ -154,8 +164,70 @@ end
 %% Write the release states to CSV file for Algoryx simulation
 writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('paramID/',ObjStr,'_Traj/'));
 
+%% -------------------- Evaluate the impacts Algoryx --------------------%%
+if evalAlgoryx
+    % Because we obtain the values for mu, eN, and eT from Algoryx simulations, we delete the values here
+    clear mu eN eT
+    
+    for is = 1:tel
+        %Initialize the AGX data import
+        mu_i = 1; eN_i = 1; eT_i = 1;
+        
+        %Extract information from AGX simulation result on what COF, CONR, and COTR were used
+        mu(mu_i) = str2double(strtrim(extractAfter(extractBefore(extractAfter(string(AGXData.model.BoxTossBatch.ds),"friction"),"step"),"default:")));
+        eN(eN_i) = str2double(strtrim(extractAfter(extractBefore(extractAfter(string(AGXData.model.BoxTossBatch.ds),"normal_restitution"),"step"),"default:")));
+        eT(eT_i) = str2double(strtrim(extractAfter(extractBefore(extractAfter(string(AGXData.model.BoxTossBatch.ds),"tangential_restitution"),"step"),"default:")));
+        
+        fn = fieldnames(Results);
+        num_par = (length(fn)/(tel));
+        cnt = 0; %Counter to count what parameter combination we are considering (0 <= cnt <= num_par)
+        %For the current impact event, we are now looping through the parameters
+        for ip = ((num_par*(is-1))+1):((num_par*(is))) %For all parameters
+            cnt = cnt+1;
+            %Select the data
+            t = AGXData.box.(fn{ip}).ds;
+            conf_nm = AGXData.box.(fn{ip}).attr.configuration_data_names;
+            mu2 = str2double(extractBefore(extractAfter(conf_nm,"friction="),","));
+            eN2 = str2double(extractBefore(extractAfter(conf_nm,"normal_restitution="),","));
+            eT2 = str2double(extractAfter(conf_nm,"tangential_restitution="));
+            
+            if sum(mu2 == mu) == 0;  mu_i = mu_i +1; mu(mu_i) = mu2; else mu_i = find(mu2 == mu); end
+            if sum(eN2 == eN) == 0;  eN_i = eN_i +1; eN(eN_i) = eN2; else eN_i = find(eN2 == eN); end
+            if sum(eT2 == eT) == 0;  eT_i = eT_i +1; eT(eT_i) = eT2; else eT_i = find(eT2 == eT); end
+            
+            %Obtain AGX results
+            NtimeidxA = length(t(:,1));
+            for ii = 1:NtimeidxA
+                MH_B_AGX(:,:,ii,cnt) = [t(ii,1) t(ii,5) t(ii,9) t(ii,13); t(ii,2) t(ii,6) t(ii,10) t(ii,14); t(ii,3) t(ii,7) t(ii,11) t(ii,15); t(ii,4) t(ii,8) t(ii,12) t(ii,16)];
+            end
+
+            Mo_B_meas = Mo_B(:,id(is,1):id(is,1)+NtimeidxA,is);                %Measured position data
+            MR_B_meas = cat(3,MH_Bm(1:3,1:3,id(is,1):id(is,1)+NtimeidxA,is));  %Measured Rotation data
+            Mo_B_A = squeeze(MH_B_AGX(1:3,4,:,cnt));                       %Simulated position data
+            MR_B_A = MH_B_AGX(1:3,1:3,:,cnt);                              %Simulated Rotation data
+
+            %Compute the cost
+            for it = 1:NtimeidxA
+                e_pos_A(it) = norm(Mo_B_meas(:,it)-Mo_B_A(:,it));
+                e_rot_A(it) = norm(logm(MR_B_meas(:,:,it)\MR_B_A(:,:,it))); 
+            end
+
+            %Cost function
+            E_AGX(mu_i,eN_i,eT_i,is) = 1/Ntimeidx * (1/Box.dimensions.ds(1)*sum(e_pos_A) + sum(e_rot_A));             
+        end
+        CurrentE_AGX = E_AGX(:,:,:,is);
+        [~,optAGX_idx]= min(CurrentE_AGX(:));
+                
+        [a1,b1,c1]=ind2sub(size(E_AGX),optAGX_idx);
+        if length(a1)==1 && length(b1)==1 && length(c1)==1
+            AGXmu_opt(is) = mu(a1);
+            AGXeN_opt(is) = eN(b1);
+            AGXeT_opt(is) = eT(c1);
+        end
+        AGXwi(is) = E_AGX(a1,b1,c1,is);
+    end
+end
 %% Do the Matlab simulations from the release states computed above
-% load('box5.mat')
 if evalMatlab    
     %Obtain the vectors of mu, eN, and eT for which we run the
     %parameter identification. If evalAlgoryx is true, the vectors for mu1,
@@ -200,8 +272,25 @@ if evalMatlab
         end
     end
 end
+
+
 %% Evaluate the parameters
 SUMMATLAB = (1/length(E_MATLAB(1,1,1,:)))*sum(E_MATLAB(:,:,:,:),4);
+SUMAGX = (1/length(E_AGX(1,1,1,:)))*sum(E_AGX(:,:,:,:),4);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 %% -------------------------- Plot the figures --------------------------%%
 close all;
@@ -226,6 +315,7 @@ figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
     view(-40,15); 
     xlim([0 1]);
     ylim([0 1]);
+%     zlim([4 5.5]);
     xlabel('$e_N$');
     ylabel('$\mu$');
     zlabel('$\frac{1}{N}\sum_{i=1}^NL_{traj}(\mu,e_N)_i$');
@@ -233,22 +323,26 @@ figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
     print(fig,append('figures/Traj_Based_Cost_Matlab'),'-dpdf','-vector'); end
 
-%Plot the cost of MATLAB simulation on small z-axis
+%Plot the cost of Algoryx simulation
 figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
-    surf(eN,mu,SUMMATLAB); 
+    surf(eN,mu,SUMAGX); 
     axis square; 
     view(-40,15); 
     xlim([0 1]);
     ylim([0 1]);
-    zlim([1.5 1.9])
+%     zlim([0.5 6]);
     xlabel('$e_N$');
     ylabel('$\mu$');
     zlabel('$\frac{1}{N}\sum_{i=1}^NL_{traj}(\mu,e_N)_i$');
+
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+    print(fig,append('figures/Traj_Based_Cost_Algoryx'),'-dpdf','-vector'); end
+
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface
-plotnr = 1;
+plotnr = 100;
 
 ws    = 1.5;  %Width of the contact surface             [m]
 ls    = 1.5;  %Length of the contact surface           [m]
@@ -266,10 +360,10 @@ figure('pos',[500 500 500 300]);
         g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,color.Meas,0);hold on;
         
         %Plot MATLAB box
-        g2 = plotBox(MH_B_M(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Matlab,0); hold on;     
+        g2 = plotBox(MH_B_M(:,:,ii-(id(plotnr,1)-1),1),Box,color.Matlab,0); hold on;     
 
         %Plot new AGX box results
-%         g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),box5,color.Algoryx,0);hold on;
+        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Algoryx,0);hold on;
 
         %Plot the conveyor C
         table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;

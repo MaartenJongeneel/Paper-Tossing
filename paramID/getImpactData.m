@@ -1,6 +1,6 @@
 % function impacts = getImpactData(h5file,measname)
 % h5file = "D:\OneDrive - TU Eindhoven\I.AM\9.Database\Archives_local\220426_ParamID_Box006.h5";
-h5file = "./data/220907_I_AM_Archive_5_ParamID_Box006.h5";
+h5file = "220907_I_AM_Archive_5_ParamID_Box006.h5";
 ObjStr = "Box006"; %The object for which you want to do paramID
 EnvStr = "Conveyor002"; %The Environment for which you want to do paramID
 % ImpPln = true; %Impact plane: false = no Motive impact plane, taking origin as impact plane. Otherwise, give the string name in ImpStr
