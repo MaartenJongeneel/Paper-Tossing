@@ -1,4 +1,4 @@
-function [AH_B, BV_AB, FN, FT] = BoxSimulator(releasePosition,releaseOrientation,releaseLinVel,releaseAngVel,eN,eT,mu,box,AR_C,Ao_C,dt,Ntimeidx)
+function [AH_B, BV_AB, FN, FT] = BoxSimulator(relPos,relRot,relLinVel,relAngVel,eN,eT,mu,box,AR_C,Ao_C,dt,Ntimeidx)
 %% Box-simulator-FixedPoint:
 %This script uses an augmented Lagrangian approach (fixed-point iteration)
 %for solving the nonlinear algebraic equations for contact impact and
@@ -7,36 +7,38 @@ function [AH_B, BV_AB, FN, FT] = BoxSimulator(releasePosition,releaseOrientation
 %we express all positions and velocities in terms of frame A, located at
 %the camera coordinate frame of a camera, also plotted in the figure.
 %
-% INPUTS:    releasePosition     : 3x1 double, position of the box at release
-%            releaseOrientation  : 3x3 double, orientation of the box at release
-%            releaseLinVel       : 3x1 double, linear velocity of the box at release
-%            releaseAngVel       : 3x1 double, angular velocity of the box at release
-%            eN                  : 1x1 double, normal coefficient of restitution
-%            eT                  : 1x1 double, tangential coefficient of restitution
-%            mu                  : 1x1 double, coefficient of friction
-%            box                : struct, with fields of box properties as
-%                                  box.B_M_B  : 6x6 double intertia tensor of the box
-%                                  box.mass    : 1x1 double mass of the box
-%                                  box.vertices: 3x8 double position of the vertices of 
-%                                                the box w.r.t body-fixed frame
-%            AR_C                : 3x3 double, Orientation of the contact surface
-%            Ao_C                : 3x1 double, Position of the contact surface
-%            dt                  : 1x1 double, Timestep at which the simulator runs
-%            Ntimeidx          : 1x1 double, Number of discrete time indices you want to run the simulation
+% INPUTS:    relPos      : 3x1 double, position of the box at release
+%            relRot      : 3x3 double, orientation of the box at release
+%            relLinVel   : 3x1 double, linear velocity of the box at release
+%            relAngVel   : 3x1 double, angular velocity of the box at release
+%            eN          : 1x1 double, normal coefficient of restitution
+%            eT          : 1x1 double, tangential coefficient of restitution
+%            mu          : 1x1 double, coefficient of friction
+%            box         : struct, with fields of box properties as
+%                            box.B_M_B  : 6x6 double intertia tensor of the box
+%                            box.mass    : 1x1 double mass of the box
+%                            box.vertices: 3x8 double position of the vertices of 
+%                                           the box w.r.t body-fixed frame
+%            AR_C        : 3x3 double, Orientation of the contact surface
+%            Ao_C        : 3x1 double, Position of the contact surface
+%            dt          : 1x1 double, Timestep at which the simulator runs
+%            Ntimeidx    : 1x1 double, Number of discrete time indices you want to run the simulation
+%            conv_vel_dir: 3,1 double, direction vector of conveyor velocity
+%            conv_vel_mag: 1x1 double, magnitude of conveyor velocity
 %
-% OUTPUTS:   AH_B                : Pose of the box over time
-%            BV_AB               : Left trivialized velocity of the box over time
-%            FN                  : Normal force acting on the box over time
-%            FT                  : Tangential force acting on the box over time
+% OUTPUTS:   AH_B        : Pose of the box over time
+%            BV_AB       : Left trivialized velocity of the box over time
+%            FN          : Normal force acting on the box over time
+%            FT          : Tangential force acting on the box over time
 %% Constants and settings
 g     = 9.81;              %Gravitational acceleration              [m/s^2]
-a     = 0.0001;              %Prox point auxilary parameter           [-]
+a     = 0.0001;            %Prox point auxilary parameter           [-]
 tol   = 1e-6;              %Error tol for fixed-point               [-]
 Cz_C  = [0;0;1];           %z-component of the C frame              [-]
 Cy_C  = [0;1;0];           %y-component of the C frame              [-]
 Cx_C  = [1;0;0];           %x-component of the C frame              [-]
-Bv_AB = releaseLinVel;     %Linear velocity at t0 of B wrt frame A  [m/s]
-Bomg_AB = releaseAngVel;   %Angular velocity at t0 of B wrt frame A [m/s]
+Bv_AB = relLinVel;         %Linear velocity at t0 of B wrt frame A  [m/s]
+Bomg_AB = relAngVel;       %Angular velocity at t0 of B wrt frame A [m/s]
 PNfull = zeros(8,1);       %Initial guess for momenta PN            [N*s]
 PTfull(1:8,1) = {[0;0]};   %initial guess for momenta PT            [N*s]
 run    = true;             %Boolean to determine if box is moving   [-]
@@ -63,13 +65,19 @@ BA_f   = [BA_fo; BA_Tau];
 
 %% Initial pose and velocity
 %Initial pose of the box: Transformation matrix B w.r.t. frame A
-AR_B    = releaseOrientation;%Initial orientation
-Ao_B    = releasePosition;   %Initial position
+AR_B    = relRot;%Initial orientation
+Ao_B    = relPos;   %Initial position
 AH_B{1} = [AR_B, Ao_B; zeros(1,3), 1]; %Homogeneous transformation matrix
 
 %Initial left trivialized velocity of frame B w.r.t. frame A
 BV_AB(:,1) = [Bv_AB; Bomg_AB];
-
+% BAX_B(:,:,1) = [AR_B zeros(3); zeros(3) AR_B];
+% BAV_AB(:,1) = BAX_B*BV_AB(:,1);
+% CAV_AC(:,1) = [conv_vel_dir*conv_vel_mag; zeros(3,1)];
+% 
+% %Remove conveyor velocity from box speed
+% BAV_AB(:,1) = BAV_AB(:,1) - CAV_AC(:,1);
+% BV_AB(:,1) = BAX_B\BAV_AB(:,1);
 %% Defining the contact plane
 %Direction of the normal and in-plane vectors of the plane w.r.t. frame A
 Az_C = AR_C*Cz_C;
@@ -174,8 +182,8 @@ while run
         end
     end
     
-    %Complete the time step
-    AH_B{ii+1}  = AH_Bm*expm(0.5*dt*hat(BV_AB(:,ii+1)));
+    %Complete the time step and add the conveyor speed back
+    AH_B{ii+1}  = AH_Bm*expm(0.5*dt*hat(BV_AB(:,ii+1)));% + [zeros(3) (CAV_AC(1:3)*dt); zeros(1,4)]; compensate back conveyor speed
     
     %Kinetic energy
     E(ii) = 0.5*BV_AB(:,ii)'*B_M_B*BV_AB(:,ii);  %Kinetic energy

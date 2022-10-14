@@ -7,8 +7,8 @@ addpath(genpath('readH5')); addpath('data');
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
 %% Load the data
-data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
 % data = readH5('220920_Box005_Validation.h5'); %Validation of Box005
+data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -17,9 +17,9 @@ color.Meas = [128 128 128]/255;
 N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
 MATLAB.Box005.Vel   = [0.35 0.00 0.45]; %eN eT mu
-MATLAB.Box005.Traj  = [0.10 0.00 0.45]; %eN eT mu
-MATLAB.Box006.Vel   = [0.45 0.00 0.30]; %eN eT mu 
-MATLAB.Box006.Traj  = [0.25 0.00 0.40]; %eN eT mu
+MATLAB.Box005.Traj  = [0.00 0.00 0.45]; %eN eT mu [0.10 0.00 0.45]; %eN eT mu
+MATLAB.Box006.Vel   = [0.40 0.00 0.25]; %eN eT mu 
+MATLAB.Box006.Traj  = [0.00 0.40 0.40]; %eN eT mu [0.25 0.00 0.40]; %eN eT mu
 
 ObjStr = "Box006"; %The object for which you want to do paramID
 ImpPln = "GroundPlane001";
@@ -198,7 +198,7 @@ end
 figure('rend','painters','pos',[500 500 150 195]);
     ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
-    for ii =1:tel
+    for ii =91%1:tel
     Ptrans = MH_B_rest(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransM = MH_B_restM(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransA = MH_B_restAGX(:,:,ii)*[Box.vertices.ds';ones(1,8)];
@@ -217,14 +217,9 @@ figure('rend','painters','pos',[500 500 150 195]);
     ylabel('$(^M\mathbf{o}_B)_y$');
     axis equal
     axis([-0.1 0.6 -0.1 0.9]); 
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/RestPose/',ObjStr,'_',Param,'/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector')
-    end
-%     pause();
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/RestPose/',ObjStr,'_',Param,'/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector'); end
+    pause();
     hold off;
     end
 
@@ -236,10 +231,14 @@ for ii =1:tel
     E_pos_A(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
 end
 
-e_pos_M = norm(mean(abs(E_pos_M(:,1:2))));
+e_pos_M = mean(vecnorm(E_pos_M(:,1:2)'));
+std_pos_M = std(vecnorm(E_pos_M(:,1:2)'));
 e_rot_M = mean(abs(E_rot_M(:,1)));
-e_pos_A = norm(mean(abs(E_pos_A(:,1:2))));
+std_rot_M = std(vecnorm(E_rot_M(:,1:2)'));
+e_pos_A = mean(vecnorm(E_pos_A(:,1:2)'));
+std_pos_A = std(vecnorm(E_pos_A(:,1:2)'));
 e_rot_A = mean(abs(E_rot_A(:,1)));
+std_rot_A = std(vecnorm(E_rot_A(:,1:2)'));
 
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface
@@ -250,10 +249,10 @@ FR_C = eye(3);
 Fo_C = zeros(3,1);
 spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
 
-plotnr = 1;
+plotnr = 91;
 %Plot the trajectory of the box
 figure('pos',[500 500 500 300]);
-    for ii=id(plotnr,1):5:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1
+    for ii=id(plotnr,1):5:id(plotnr,2)-1
         
         %plot Measured box
         g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,color.Meas,0);hold on;
@@ -262,7 +261,11 @@ figure('pos',[500 500 500 300]);
         g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Matlab,0); hold on;     
 
         %Plot new AGX box results
-        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Algoryx,0);hold on;
+        if ObjStr == "Box005"
+            g3 = plotBox(MH_B_AGX(:,:,round((ii-(id(plotnr,1)-1))*360/125),plotnr),Box,color.Algoryx,0);hold on;
+        else
+            g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Algoryx,0);hold on;
+        end
 
         %Plot the conveyor C
         table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
@@ -281,7 +284,7 @@ figure('pos',[500 500 500 300]);
         plot3([0 tip(1,3)],[0 tip(2,3)],[0 tip(3,3)],'b');
 
         grid on;axis equal;
-        axis([-0.4 0.6 -0.6 0.8 -0.05 0.3]);
+        axis([-0.7 0.6 -0.6 0.8 -0.05 0.3]);
         xlabel('x [m]');
         ylabel('y [m]');
         zlabel('z [m]');
@@ -289,10 +292,10 @@ figure('pos',[500 500 500 300]);
 %         view(-118,27);
         view(-315,31);
 %         view(-90,0);
-        text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
-        L1 = legend([g1 g2 ],'Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
-        L1.Position(2) = 0.90;
-        L1.Position(1) = 0.52-(L1.Position(3)/2);
+%         text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
+%         L1 = legend([g1 g2 ],'Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
+%         L1.Position(2) = 0.90;
+%         L1.Position(1) = 0.52-(L1.Position(3)/2);
         drawnow
         hold off
 %         pause()        
@@ -309,7 +312,7 @@ FR_C = eye(3);
 Fo_C = zeros(3,1);
 spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
 
-plotnr = 11;
+plotnr = 91;
 %Plot the trajectory of the box
 figure('pos',[50 50 400 200]);
     ha = tight_subplot(1,1,[.08 .07],[.01 -.3],[0.03 0.03]);  %[gap_h gap_w] [lower upper] [left right]
@@ -319,7 +322,7 @@ figure('pos',[50 50 400 200]);
     set(table3,'FaceColor',[56 53 48]/255,'FaceAlpha',1);
     
     %plot Measured box
-    for ii=id(plotnr,1):18:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1        
+    for ii=[373 391 409 427 445 463 481 499 535 571 607]  %id(plotnr,1):18:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1        
         g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,[194 135 43]/255,0);hold on;   
         drawnow
     end

@@ -129,13 +129,13 @@ for iim = 1:length(fname)
             axes(ha(1));
             vertex=find(plocs==ii_imp);
             vrest = 1:8~=vertex;
-            p1 = plot(Cp_z(vrest,:)','color',[0 0 0 0.1]); hold on; grid on;
+            p1 = plot(Cp_z(vrest,:)','color',[0 0 0 0.2]); hold on; grid on;
             p2 = plot(Cp_z(vertex,:)','color',[0 0.4470 0.7410]);
             p3 = plot(plocs(vertex),Cp_z(vertex,plocs(vertex)),'o','color',[0 0.4470 0.7410]);
             axis([240 450 -0.02 0.3]);
-            xlabel('Time index $t_k$');
-            ylabel('$(^C\mathbf{p}_i(t_k))_z$ [m]')
-            L1 = legend([p2 p3 p1(1)],'Trajectory of $(^C\mathbf{p}_1)_z$','Found impact time $t_j$ = 275','Trajectory of $(^C\mathbf{p}_{i\neq1})_z$','location','northeast');
+            xlabel('Time index $t$ [-]');
+            ylabel('$(^C\mathbf{p}_i(t))_z$ [m]')
+            L1 = legend([p2 p3 p1(1)],'Trajectory of $(^C\mathbf{p}_1)_z$','Found impact time $t_{imp}$ = 275','Trajectory of $(^C\mathbf{p}_{i\neq1})_z$','location','northeast');
             if doSave
                 fig = gcf;
                 fig.PaperPositionMode = 'auto';

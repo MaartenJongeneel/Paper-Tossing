@@ -7,8 +7,8 @@ addpath(genpath('readH5')); addpath('data');
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
 %% Load the data
-data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
-% data = readH5('220920_Box005_Validation.h5'); %Validation of Box005
+data = readH5('220920_Box005_Validation.h5'); %Validation of Box005
+% data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -16,21 +16,21 @@ color.Algoryx = [77 191 237]/255;
 color.Meas = [128 128 128]/255;
 N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
-MATLAB.Box005.Vel   = [0.35 0.00 0.45]; %eN eT mu
 MATLAB.Box005.Traj  = [0.10 0.00 0.45]; %eN eT mu
-MATLAB.Box006.Vel   = [0.45 0.00 0.30]; %eN eT mu 
 MATLAB.Box006.Traj  = [0.25 0.00 0.40]; %eN eT mu
+Algoryx.Box005.Traj = [0.00 0.00 0.40]; %eN eT mu
+Algoryx.Box006.Traj = [0.30 0.00 0.40]; %eN eT mu
+
+% MATLAB_eN_sigma = 0.125; %Covariance of eN parameter set (not covariance of mean!)
+% MATLAB_mu_sigma = 0.124; %Covariance of mu parameter set (not covariance of mean!)
+% Algoryx_eN_sigma = 0.127; %Covariance of eN parameter set (not covariance of mean!)
+% Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
 
 
-MATLAB_eN_sigma = 0.125; %Covariance of eN parameter set (not covariance of mean!)
-MATLAB_mu_sigma = 0.124; %Covariance of mu parameter set (not covariance of mean!)
-Algoryx_eN_sigma = 0.127; %Covariance of eN parameter set (not covariance of mean!)
-Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
-
-
-ObjStr = "Box006"; %The object for which you want to do paramID
+ObjStr = "Box005"; %The object for which you want to do paramID
 ImpPln = "GroundPlane001";
-Param = "Traj";  %Trajectory based parameters are tested 
+Param = "eN";  %Sensitivity of mu or eN 
+
 %% Loop through the data
 tel = 0;
 fn = fieldnames(data);
@@ -135,33 +135,44 @@ for ii = 1:length(fn)
 end
 
 %% Write the varying parameters to a CSV file for Algoryx simulations
-eN_vec_A = Algoryx_eN + randn(1,Nib)*Algoryx_eN_sigma/2;
-mu_vec_A = Algoryx_mu + randn(1,Nib)*Algoryx_mu_sigma/2;
+if Param == "mu" %If we consider sensitivity of mu, vary mu, keep eN constant
+    eN_vec_A = Algoryx.(ObjStr).Traj(1) + linspace(0,0,11);
+    mu_vec_A = Algoryx.(ObjStr).Traj(3) + linspace(-0.05,0.05,11);
+elseif Param == "eN" %If we consider sensitivity of eN, vary eN, keep mu constant
+    eN_vec_A = Algoryx.(ObjStr).Traj(1) + linspace(-0.05,0.05,11);
+    mu_vec_A = Algoryx.(ObjStr).Traj(3) + linspace(0,0,11);
+end
 
 params_csv(1,:) = num2cell(["friction_distribution","restitution_distribution"]);    
 params_csv(2:length(eN_vec_A)+1,:) = num2cell([mu_vec_A', eN_vec_A']);
 
-if ~isfolder("sensitivity/AGX_init_states")
-    mkdir("sensitivity/AGX_init_states");
-end
 
-writecell(params_csv,'sensitivity/AGX_init_states/friction_restitution_distribution_test.csv');
+writecell(params_csv,append('sensitivity/',ObjStr,'_',Param,'/friction_restitution_distribution_test.csv'));
+
+%Write initial states file of box and conveyor 
+writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('sensitivity/',ObjStr,'_',Param,'/'));
 
 %% Matlab simulations for varying params
-Nib = 25;
-for is = 1:tel
-    eN_vec = MATLAB_eN + randn(1,Nib)*MATLAB_eN_sigma/2;
+Nib = 11;
+if Param == "mu" %If we consider sensitivity of mu, vary mu, keep eN constant
+    eN_vec = MATLAB.(ObjStr).Traj(1) + linspace(0,0,Nib);
     eT_vec = zeros(1,Nib);
-    mu_vec = MATLAB_mu + randn(1,Nib)*MATLAB_mu_sigma/2;
-    endframe = 3*fps;
+    mu_vec = MATLAB.(ObjStr).Traj(3) + linspace(-0.05,0.05,Nib);
+elseif Param == "eN" %If we consider sensitivity of eN, vary eN, keep mu constant
+    eN_vec = MATLAB.(ObjStr).Traj(1) + linspace(-0.05,0.05,Nib);
+    eT_vec = zeros(1,Nib);
+    mu_vec = MATLAB.(ObjStr).Traj(3) + linspace(0,0,Nib);
+end
+for is = 1:tel
+    endframe = 2*1/dt;
     for ib = 1:Nib
-        [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eN_vec(ib),eT_vec(ib),mu_vec(ib),box5,eye(3),zeros(3,1),1/120,endframe);
+        [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eN_vec(ib),eT_vec(ib),mu_vec(ib),Box,eye(3),zeros(3,1),dt,endframe);
         MH_B_restM_P(:,:,ib,is) = MH_B_MATLAB{end};
     end
 end    
 
 %% Load the multiple (varying params) AGX simulations
-AGXResult_h5file = "performance/data/TossTest_BoxTossRandomFriction_result.hdf5";
+AGXResult_h5file = append('sensitivity/',ObjStr,'_',Param,'/',ObjStr,'_sens_',Param,'_BoxTossRandomFriction_result.hdf5');
 AGXData = readH5(AGXResult_h5file);
 Results = orderfields(AGXData.box);
 fnAGX = fieldnames(Results);
@@ -183,12 +194,12 @@ for toss_nr = 1:length(fnAGX)/Nib %The file contains length(fnAGX) simulation, w
 end
 
 %% Plot results of the multiple Matlab simulations (varying parameters)
-figure('rend','painters','pos',[500 500 300 250]);
-    ha = tight_subplot(1,1,[.08 .07],[.08 .01],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+figure('rend','painters','pos',[500 500 150 195]);
+    ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
-    for toss_nr =13 %:tel
-    Ptrans = MH_B_rest(:,:,toss_nr)*[box5.vertices;ones(1,8)];
-    PtransM = MH_B_restM(:,:,toss_nr)*[box5.vertices;ones(1,8)];
+    for toss_nr =1:tel
+    Ptrans = MH_B_rest(:,:,toss_nr)*[Box.vertices.ds';ones(1,8)];
+    PtransM = MH_B_restM_P(:,:,6,toss_nr)*[Box.vertices.ds';ones(1,8)]; %6th is the mean
     x1 = [Ptrans(1,1:4) Ptrans(1,1)];
     y1 = [Ptrans(2,1:4) Ptrans(2,1)];
     x2 = [PtransM(1,1:4) PtransM(1,1)];
@@ -201,33 +212,35 @@ figure('rend','painters','pos',[500 500 300 250]);
 
     %Plot the result from the sampled simulations
     for ib = 1:Nib
-    PtransM(:,:,ib) = MH_B_restM_P(:,:,ib,toss_nr)*[box5.vertices;ones(1,8)];
+    PtransM(:,:,ib) = MH_B_restM_P(:,:,ib,toss_nr)*[Box.vertices.ds';ones(1,8)];
     x2 = [PtransM(1,1:4,ib) PtransM(1,1,ib)];
     y2 = [PtransM(2,1:4,ib) PtransM(2,1,ib)];
 
     h = fill(x2,y2,color.Matlab); %Matlab box
-    h.FaceAlpha = 0.05;
+    h.FaceAlpha = 0.1;
     h.EdgeColor = [0 0 0];
-    h.EdgeAlpha = 0.2;    
+    h.EdgeAlpha = 0.4;    
     end
 
     xlabel('$(^Mo_B)_x$');
     ylabel('$(^Mo_B)_y$');
-    legend('Measured','Matlab');
-    
-%     print(gcf,append('Rest_Pose_multiple_M',sprintf('%.2d.png',toss_nr)),'-dpng','-r500'); %Uncomment if you want to save this image
-    pause();
+%     legend('Measured','Matlab');
+    axis([-0.1 0.6 -0.1 0.9]); 
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/RestPose/sensitivity/',ObjStr,'_',Param,'/Matlab/Rest-Pose_',sprintf('%.2d.pdf',toss_nr)),'-dpdf','-vector'); end
+
+%     pause();
 
     hold off;
     end
 
 %% Plot results of the multiple AGX simulations (varying parameters)
-figure('rend','painters','pos',[500 500 300 250]);
-    ha = tight_subplot(1,1,[.08 .07],[.08 .01],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+figure('rend','painters','pos',[500 500 150 195]);
+    ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
-    for toss_nr = 13; %1:length(fnAGX)/Nib
-    Ptrans = MH_B_rest(:,:,toss_nr)*[box5.vertices;ones(1,8)];
-    PtransA = MH_B_restAGX(:,:,toss_nr)*[box5.vertices;ones(1,8)];
+    for toss_nr = 1:length(fnAGX)/Nib
+    Ptrans = MH_B_rest(:,:,toss_nr)*[Box.vertices.ds';ones(1,8)];
+    PtransA = MH_B_restAGX_P(:,:,6,toss_nr)*[Box.vertices.ds';ones(1,8)]; %6th is the mean
     x1 = [Ptrans(1,1:4) Ptrans(1,1)];
     y1 = [Ptrans(2,1:4) Ptrans(2,1)];
     x3 = [PtransA(1,1:4) PtransA(1,1)];
@@ -241,30 +254,40 @@ figure('rend','painters','pos',[500 500 300 250]);
 
     %Plot the result from the sampled simulations
     for ib = 1:Nib
-        PtransA(:,:,ib) = MH_B_restAGX_P(:,:,ib,toss_nr)*[box5.vertices;ones(1,8)];
+        PtransA(:,:,ib) = MH_B_restAGX_P(:,:,ib,toss_nr)*[Box.vertices.ds';ones(1,8)];
         x3 = [PtransA(1,1:4,ib) PtransA(1,1,ib)];
         y3 = [PtransA(2,1:4,ib) PtransA(2,1,ib)];
 
         j = fill(x3,y3,color.Algoryx); %AGX box
-        j.FaceAlpha = 0.05;
+        j.FaceAlpha = 0.1;
         j.EdgeColor = [0 0 0];
-        j.EdgeAlpha = 0.2;
+        j.EdgeAlpha = 0.4;
     end
 
     xlabel('$(^Mo_B)_x$');
     ylabel('$(^Mo_B)_y$');
-    legend('Measured','Algoryx');
+    axis([-0.1 0.6 -0.1 0.9]); 
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/RestPose/sensitivity/',ObjStr,'_',Param,'/AGX/Rest-Pose_',sprintf('%.2d.pdf',toss_nr)),'-dpdf','-vector'); end
 
-%         print(gcf,append('Rest_Pose_multiple_A',sprintf('%.2d.png',toss_nr)),'-dpng','-r500'); %Uncomment if you want to save this image
-%         pause();
+%     pause();
 
     hold off;
     end
 %% Compute the errors of the rest-orientation and rest-position
 for ii =1:tel
+    E_rot_M(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restM_P(1:3,1:3,6,ii)));
+    E_rot_A(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX_P(1:3,1:3,6,ii)));
+    E_pos_M(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restM_P(1:3,4,6,ii))';
+    E_pos_A(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX_P(1:3,4,6,ii))';
     E_pos_M_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restM_P(1:3,4,:,ii))),2))';
     E_pos_A_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restAGX_P(1:3,4,:,ii))),2))';
 end
+
+e_pos_M = norm(mean(abs(E_pos_M(:,1:2))));
+e_rot_M = mean(abs(E_rot_M(:,1)));
+e_pos_A = norm(mean(abs(E_pos_A(:,1:2))));
+e_rot_A = mean(abs(E_rot_A(:,1)));
 e_pos_M_P = norm(mean(abs(E_pos_M_P(:,1:2))));
 e_pos_A_P = norm(mean(abs(E_pos_A_P(:,1:2))));
 

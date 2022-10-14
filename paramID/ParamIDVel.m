@@ -16,8 +16,8 @@ close all; set(groot,'defaulttextinterpreter','latex'); set(groot,'defaultAxesTi
 Object = 'Box006';
 Environment = "Conveyor002";  %Select what conveyor you want to consider
 impact_data = append('paramID/',Object,'_Vel/',Object,'_impacts.mat');
-AGXResult_h5file = append('paramID/',Object,'_Vel/',Object,'_AGX_Batch_result.hdf5');
-evalAlgoryx = false;
+AGXResult_h5file = append('paramID/',Object,'_Vel/',Object,'_ParamID_Vel_BoxTossBatch_result.hdf5');
+evalAlgoryx = true;
 evalMatlab = true;
 evalMuJoCo = false;
 
@@ -268,37 +268,6 @@ clear meanM_mu stdM_mu meanM_eN stdM_eN meanA_mu stdA_mu meanA_eN stdA_eN
 %Randomly sample from data, without replacement:
 [~,idx] = datasample(mmu,length(mmu),'Replace',false);
 
-%Box 5 indices
-% idx = [24,93,35,19,86,107,11,67,3,103,94,76,91,83,42,78,114,72,77,23,32,49,69,58,100,57,113,21,2,81,31,55,116,108,104,51,38,18,14,102,75,28,63,99,17,7,112,54,34,98,22,73,90,40,33,43,74,110,46,89,44,79,26,92,62,50,15,27,84,4,5,82,10,65,29,66,13,80,47,36,59,111,56,53,64,16,1,106,88,109,95,60,97,30,9,85,48,20,39,96,12,25,68,8,37,101,6,52,61,70,105,71,45,87,41,115];
-
-if evalMatlab
-    y1 = mmu(idx);
-    y2 = meN(idx); %datasample(meN,length(meN),'Replace',false);
-    ywm = mwi(idx);
-    
-    for ii = 1:length(mmu)
-        meanM_mu(ii) = 1/(sum(ywm(1:ii)))*ywm(1:ii)*y1(1:ii)'; 
-        stdM_mu(ii) = 1/sqrt(ii)*sqrt(1/sum(ywm(1:ii))*ywm(1:ii)*((y1(1:ii) - meanM_mu(ii)).^2)');
-        
-        meanM_eN(ii) = 1/(sum(ywm(1:ii)))*ywm(1:ii)*y2(1:ii)';
-        stdM_eN(ii) = 1/sqrt(ii)*sqrt(1/sum(ywm(1:ii))*ywm(1:ii)*((y2(1:ii) - meanM_eN(ii)).^2)'); 
-    end
-end
-
-if evalAlgoryx
-    y3 = amu(idx); %datasample(amu,length(amu),'Replace',false);
-    y4 = aeN(idx); %datasample(aeN,length(aeN),'Replace',false);
-    ywa = awi(idx); 
-    
-    for ii = 1:length(amu)
-        meanA_mu(ii) = 1/(sum(ywa(1:ii)))*ywa(1:ii)*y3(1:ii)';
-        stdA_mu(ii) = 1/sqrt(ii)*sqrt(1/sum(ywa(1:ii))*ywa(1:ii)*((y3(1:ii) - meanA_mu(ii)).^2)');
-        
-        meanA_eN(ii) = 1/(sum(ywa(1:ii)))*ywa(1:ii)*y4(1:ii)';
-        stdA_eN(ii) = 1/sqrt(ii)*sqrt(1/sum(ywa(1:ii))*ywa(1:ii)*((y4(1:ii) - meanA_eN(ii)).^2)');
-    end
-end
-
 %Select the indices that indicate the time of pre- and post-impact velocity
 is = 119; %is = 136; %Box006
 Ib = impacts.indx(imp_sel(is),3) - impacts.indx(imp_sel(is),2);
@@ -315,53 +284,7 @@ BCV_CBaf   = cell2mat(impacts.BCV_CBaf(imp_sel(is),:));
 BCV_CBef   = cell2mat(impacts.BCV_CBef(imp_sel(is),:));
 V_impact   = impacts.indx(imp_sel(is),1);
 
-if evalMatlab
-    %Plot the evolution of mu MATLAB
-    figure('rend','painters','pos',[pp{3,1} sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1));
-    plot(meanM_mu,'color',[0 0.4470 0.7410],'linewidth',1.2); hold on; grid on;
-    plot(2:length(meanM_mu),meanM_mu(2:end)+2*stdM_mu(2:end),'--','color','k','linewidth',0.1);
-    plot(2:length(meanM_mu),meanM_mu(2:end)-2*stdM_mu(2:end),'--','color','k','linewidth',0.1);
-    legend('Mean value','Two standard deviations');
-    ylim([0 1]);
-    xlim([1 length(meanM_mu)]);
-    xticks([1 20 40 60 80 100]);
-    xticklabels({'1','20','40','60','80','100'});
-    xlabel('Number of impact events');
-    ylabel('Coefficient of friction $\mu$')
-%     print(gcf,'M_mu_evel.png','-dpng','-r500');
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/',Object,'/NewSolver/MATLABmu.pdf'),'-dpdf','-vector')
-    end
-    
-    %Plot the evolution of eN MATLAB
-    figure('rend','painters','pos',[pp{3,2} sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1));
-    plot(meanM_eN,'color',[0.8500 0.3250 0.0980],'linewidth',1.2); hold on; grid on;
-    plot(2:length(meanM_eN),meanM_eN(2:end)+2*stdM_eN(2:end),'--','color','k','linewidth',0.1);
-    plot(2:length(meanM_eN),meanM_eN(2:end)-2*stdM_eN(2:end),'--','color','k','linewidth',0.1);
-    legend('Mean value','Two standard deviations');
-    ylim([0 1]);
-    xlim([1 length(meanM_eN)]);
-    xticks([1 20 40 60 80 100]);
-    xticklabels({'1','20','40','60','80','100'});
-    xlabel('Number of impact events');
-    ylabel('Coefficient of normal restitution $e_N$')
-%     print(gcf,'M_eN_evel.png','-dpng','-r500');
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/',Object,'/NewSolver/MATLABeN.pdf'),'-dpdf','-vector')
-    end
-   
+if evalMatlab  
     %Combined plot
     figure('rend','painters','pos',[pp{3,3} 2*sizex sizey]);
     ha = tight_subplot(1,2,[.08 .07],[.18 .15],[0.08 0.03]);  %[gap_h gap_w] [lower upper] [left right]
@@ -372,7 +295,7 @@ if evalMatlab
     set(hM,{'color'},{color.Red; color.Green; color.Blue})
     p = plot(-5:Ib,BCV_CBaf(1:3,1:indx_b)','-.','color','k','LineWidth',1);
     plot(Ic:5,BCV_CBef(1:3,indx_c:11)','-.','color','k','LineWidth',1);
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
     ha(1).XTick = k;
     
@@ -383,7 +306,7 @@ if evalMatlab
     set(hM,{'color'},{color.Red; color.Green; color.Blue})
     plot(-5:Ib,BCV_CBaf(4:6,1:indx_b)','-.','color','k');
     plot(Ic:5,BCV_CBef(4:6,indx_c:11)','-.','color','k');
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
     ha(2).XTick = k;
 %     L1 = legend([hm(1) hm(2) hm(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','Fitted','NumColumns',4,'location','northeast');
@@ -392,111 +315,25 @@ if evalMatlab
     L1.Position(1) = 0.52-(L1.Position(3)/2);
 %     print(gcf,'VelMATLAB.png','-dpng','-r500');
     
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'VelMATLAB.pdf','-dpdf','-vector')
-    end
-
+    if doSave;fig = gcf; fig.PaperPositionMode = 'auto';fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'VelMATLAB.pdf','-dpdf','-vector'); end
+%%
     %Plot the combined cost of Matlab
     figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMMATLAB); axis square;
-    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{k=1}^N(\|$diag$(\mathbf{w})(\Delta \mathbf{v})\|)_k$');
+    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{i=1}^N L_{vel}(\mu,e_N)_i$');
     zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
     xlim([0 1]);
     ylim([0 1]);
     view(-40,15);
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/',Object,'/NewSolver/Cost_SUMMATLAB.pdf'),'-dpdf','-vector')
-    end
-    
-    %
-    %Plot the optimum parameters in the parameter space
-    [a1,b1,c1] = find(SUMMATLAB == min(SUMMATLAB(:)));
-    figure('rend','painters','pos',[pp{1,1} 0.7*sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.15 .04],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1)); 
-        surf(eN,mu,SUMMATLAB); 
-        hold on;
-        g1=plot3(eN(b1),mu(a1),c1,'.','color',[0.3010 0.7450 0.9330],'MarkerSize',22); 
-        g2=plot3(mwi*meN',mwi*mmu',c1,'.','color',[0.9290 0.6940 0.1250],'MarkerSize',22);
-        g3=plot3(mean(meN),mean(mmu),c1,'.','color',[0.4660 0.6740 0.1880],'MarkerSize',22);
-        axis square;    
-        xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{k=1}^N(\|$diag$(\mathbf{w})(\Delta \mathbf{v})\|)_k$');
-        zlim([0 1.25]);
-        xlim([0.25 0.45]);
-        ylim([0.35 0.55]);
-        view(0,90);
-        L1 = legend([g1,g2,g3],'Combined CF optimum','Mean of CF''s','Weighted mean of CF''s');
-        L1.Position(2) = 0.78;
-        L1.Position(1) = 0.545-(L1.Position(3)/2);
-%         print(gcf,'M_OptParam.png','-dpng','-r500');
-
-    figure('rend','painters','pos',[pp{1,2} sizex sizey]);
-        ha = tight_subplot(1,1,[.08 .07],[.15 .06],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-        axes(ha(1)); 
-        plot(mwi,'o');
-        xlabel('Impact event');
-        ylabel('Normalized weight');
-%         print(gcf,'WeightsMatlab.png','-dpng','-r500');
+    if doSave;fig = gcf;fig.PaperPositionMode = 'auto';fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/',Object,'/Cost_SUMMATLAB.pdf'),'-dpdf','-vector'); end
 end
 
 %%
 if evalAlgoryx    
-    %Plot the evolution of mu AGX
-    figure('rend','painters','pos',[pp{2,1} sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1));
-    plot(meanA_mu,'color',[0 0.4470 0.7410],'linewidth',1.2); hold on; grid on;
-    plot(2:length(meanA_mu),meanA_mu(2:end)+2*stdA_mu(2:end),'--','color','k','linewidth',0.1);
-    plot(2:length(meanA_mu),meanA_mu(2:end)-2*stdA_mu(2:end),'--','color','k','linewidth',0.1);
-    legend('Mean value','Two standard deviations');
-    ylim([0 1]);
-    xlim([1 length(meanA_mu)]);
-    xticks([1 20 40 60 80 100]);
-    xticklabels({'1','20','40','60','80','100'});
-    xlabel('Number of impact events');
-    ylabel('Coefficient of friction $\mu$')
-%     print(gcf,'A_mu_evel.png','-dpng','-r500');
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/',Object,'/NewSolver/AGXmu.pdf'),'-dpdf','-vector')
-    end
-    
-    %Plot the evolution of eN AGX
-    figure('rend','painters','pos',[pp{2,2} sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1));
-    plot(meanA_eN,'color',[0.8500 0.3250 0.0980],'linewidth',1.2); hold on; grid on;
-    plot(2:length(meanM_eN),meanA_eN(2:end)+2*stdA_eN(2:end),'--','color','k','linewidth',0.1);
-    plot(2:length(meanM_eN),meanA_eN(2:end)-2*stdA_eN(2:end),'--','color','k','linewidth',0.1);
-    legend('Mean value','Two standard deviations');
-    ylim([0 1]);
-    xlim([1 length(meanA_eN)]);
-    xticks([1 20 40 60 80 100]);
-    xticklabels({'1','20','40','60','80','100'});
-    xlabel('Number of impact events');
-    ylabel('Coefficient of normal restitution $e_N$')
-%     print(gcf,'A_eN_evel.png','-dpng','-r500');
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/',Object,'/NewSolver/AGXeN.pdf'),'-dpdf','-vector')
-    end
-    
     % PLOT TWIST RESULTS OF ALGORYX
     %Combined plot
     figure('rend','painters','pos',[pp{2,3} 2*sizex sizey]);
@@ -508,7 +345,7 @@ if evalAlgoryx
     set(hA,{'color'},{[0.9290 0.6940 0.1250]; [0.4940 0.1840 0.5560]; [0.3010 0.7450 0.9330]})
     p = plot(-5:Ib,BCV_CBaf(1:3,1:indx_b)','-.','color','k','LineWidth',1);
     plot(Ic:5,BCV_CBef(1:3,indx_c:11)','-.','color','k','LineWidth',1);
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
     ha(1).XTick = k;
     
@@ -519,7 +356,7 @@ if evalAlgoryx
     set(hA,{'color'},{[0.9290 0.6940 0.1250]; [0.4940 0.1840 0.5560]; [0.3010 0.7450 0.9330]})
     plot(-5:Ib,BCV_CBaf(4:6,1:indx_b)','-.','color','k');
     plot(Ic:5,BCV_CBef(4:6,indx_c:11)','-.','color','k');
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
     ha(2).XTick = k;
     L1 = legend([hm(1) hm(2) hm(3) hM(1) hM(2) hM(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','$x$-Algoryx','$y$-Algoryx','$z$-Algoryx','Fitted','NumColumns',7,'location','northeast');
@@ -527,61 +364,22 @@ if evalAlgoryx
     L1.Position(1) = 0.52-(L1.Position(3)/2);
     print(gcf,'VelAGX.png','-dpng','-r500');
     
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'figures/VelMATLAB.pdf','-dpdf','-vector')
-    end
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'figures/VelMATLAB.pdf','-dpdf','-vector'); end
 
-    %Plot the combined cost of AGX
+    %% Plot the combined cost of AGX
     figure('rend','painters','pos',[pp{2,5} 0.7*sizex sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMAGX); axis square;
-    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{k=1}^N(\|$diag$(\mathbf{w})(\Delta \mathbf{v})\|)_k$');
+    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{i=1}^N L_{vel}(\mu,e_N)_i$');
     zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
     xlim([0 1]);
     ylim([0 1]);
     view(-40,15);
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/',Object,'/NewSolver/Cost_SUMAGX.pdf'),'-dpdf','-vector')
-    end
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/',Object,'/Cost_SUMAGX.pdf'),'-dpdf','-vector'); end
     
-    %Plot the optimum parameters in the parameter space
-    [a1,b1,c1] = find(SUMAGX == min(SUMAGX(:)));
-    figure('rend','painters','pos',[pp{1,3} 0.7*sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.15 .04],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1)); 
-        surf(eN,mu,SUMAGX); 
-        hold on;
-        g1=plot3(eN(b1),mu(a1),c1,'.','color',[0.3010 0.7450 0.9330],'MarkerSize',22); 
-        g2=plot3(awi*aeN',awi*amu',c1,'.','color',[0.9290 0.6940 0.1250],'MarkerSize',22);
-        g3=plot3(mean(aeN),mean(amu),c1,'.','color',[0.4660 0.6740 0.1880],'MarkerSize',22);
-        axis square;    
-        xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{k=1}^N(\|$diag$(\mathbf{w})(\Delta \mathbf{v})\|)_k$');
-        zlim([0 1.25]);
-        xlim([0.25 0.45]);
-        ylim([0.35 0.55]);
-        view(0,90);
-        L1 = legend([g1,g2,g3],'Combined CF optimum','Mean of CF''s','Weighted mean of CF''s');
-        L1.Position(2) = 0.78;
-        L1.Position(1) = 0.545-(L1.Position(3)/2);
-%         print(gcf,'A_OptParam.png','-dpng','-r500');
-
-    figure('rend','painters','pos',[pp{1,4} sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.15 .06],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1)); 
-    plot(awi,'o');
-    xlabel('Impact event');
-    ylabel('Normalized weight');
-%     print(gcf,'WeightsAlgoryx.png','-dpng','-r500');
-
 end
     
 %%
@@ -656,12 +454,12 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     xline(5,'-.','color','k');%,'linewidth',1.3)
     xline(kf(indx_bf),'-.','color','r');%,'linewidth',1.2)
     xline(kf(indx_cf),'-.','color','r');%,'linewidth',1.2)
-    L1 = legend([p1 p2 p3 p4 p5 p6],'$(^C\dot{\mathbf{p}}_1)_x$','$(^C\dot{\mathbf{p}}_1)_y$','$(^C\dot{\mathbf{p}}_1)_z$','$(^C\dot{\mathbf{p}}_1)_z$-fit',...
+    L1 = legend([p1 p2 p3 p4 p5 p6],'$(^C\dot{\mathbf{p}}_1)_x$','$(^C\dot{\mathbf{p}}_1)_y$','$(^C\dot{\mathbf{p}}_1)_z$','$(^C\dot{\mathbf{p}}_1)_{z,\textrm{fit}}$',...
         'Cont. indices','Disc. indices $-b$, $c$','NumColumns',3,'Location','NorthWest'); 
     L1.Position(2) = 0.88;
     L1.Position(1) = 0.545-(L1.Position(3)/2);
     xlim([-5 5]);
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Contact point velocity ${^C\dot{\mathbf{p}}_1}$ [m/s]');
     ha(1).XTick = k;
     text(-5.4,0.62,'$-a$','FontSize',12);
@@ -675,7 +473,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
         fig.PaperPositionMode = 'auto';
         fig_pos = fig.PaperPosition;
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'CPVelocity_CentralEuler.pdf','-dpdf','-vector')
+        print(fig,'figures/CPVelocity_CentralEuler.pdf','-dpdf','-vector')
     end
 
 %Combined plot
@@ -686,7 +484,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     set(hm,{'color'},{color.Red; color.Green; color.Blue})
     p = plot(-5:Ib,BCV_CBaf(1:3,1:indx_b)','--','color','k','LineWidth',1.2);
     plot(Ic:5,BCV_CBef(1:3,indx_c:11)','--','color','k','LineWidth',1.2);
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
     ha(1).XTick = k;
     text(-5.4,0.75,'$-a$','FontSize',12);
@@ -703,7 +501,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     set(hm,{'color'},{color.Red; color.Green; color.Blue})
     plot(-5:Ib,BCV_CBaf(4:6,1:indx_b)','--','color','k','LineWidth',1.2);
     plot(Ic:5,BCV_CBef(4:6,indx_c:11)','--','color','k','LineWidth',1.2);
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
     ha(2).XTick = k;
     xline(-5,'-.')
@@ -719,7 +517,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
         fig.PaperPositionMode = 'auto';
         fig_pos = fig.PaperPosition;
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'MeasuredVelocities.pdf','-dpdf','-vector')
+        print(fig,'figures/MeasuredVelocities.pdf','-dpdf','-vector')
     end
 
 
@@ -737,7 +535,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     xline(indx_b-6,'-.')
     xline(indx_c-6,'-.')
     xline(5,'-.')
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
     ha(1).XTick = k;
     
@@ -752,7 +550,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     xline(indx_b-6,'-.')
     xline(indx_c-6,'-.')
     xline(5,'-.')
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
     ha(2).XTick = k;
 %     L1 = legend([hm(1) hm(2) hm(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','Fitted','NumColumns',4,'location','northeast');
@@ -766,7 +564,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
         fig.PaperPositionMode = 'auto';
         fig_pos = fig.PaperPosition;
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'VelResMATLAB.pdf','-dpdf','-vector')
+        print(fig,'figures/VelResMATLAB.pdf','-dpdf','-vector')
     end
 
 
@@ -780,7 +578,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     set(hA,{'color'},{color.Red; color.Green; color.Blue})
     p = plot(-5:Ib,BCV_CBaf(1:3,1:indx_b)','--','color','k','LineWidth',1.2);
     plot(Ic:5,BCV_CBef(1:3,indx_c:11)','--','color','k','LineWidth',1.2);
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
     ha(1).XTick = k;
     xline(-5,'-.')
@@ -795,7 +593,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     set(hA,{'color'},{color.Red; color.Green; color.Blue})
     plot(-5:Ib,BCV_CBaf(4:6,1:indx_b)','--','color','k','LineWidth',1.2);
     plot(Ic:5,BCV_CBef(4:6,indx_c:11)','--','color','k','LineWidth',1.2);
-    xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+    xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
     ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
     ha(2).XTick = k;
     xline(-5,'-.')
@@ -814,7 +612,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,'figures/VelResAGX.pdf','-dpdf','-vector')
     end
-
+%%
 %Plot contact point trajectories over time
 figure('rend','painters','pos',[pp{1,2} sizex sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.15 0.03]);  %[gap_h gap_w] [lower upper] [left right]
@@ -867,7 +665,7 @@ figure('rend','painters','pos',[pp{1,3} sizex sizey]);
 %     plot(-5:5,dCp_meas); grid on; hold on;
 %     plot(-5:Ib,Cp1(:,1:indx_b),'-.','color','k');
 %     plot(Ic:5,Cp2(:,indx_c:11),'-.','color','k');
-%     xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+%     xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
 %     ylabel('C.P. velocity ${^C\dot{\mathbf{p}}_i}$ [m/s]');
 %     legend('$x$','$y$','$z$','Fitted','Location','NorthWest');
 %     ha(1).XTick = k;
@@ -893,7 +691,7 @@ figure('rend','painters','pos',[pp{1,3} sizex sizey]);
 %     xline(indx_c-1-w_ext,'-.','color','r','linewidth',1);
 %     xline(-5,'-.','color','r','linewidth',1);
 %     xline(5,'-.','color','r','linewidth',1);
-%     xlabel('Normalized time around the impact time $(t-t_j)/\Delta t$ [-]');
+%     xlabel('Normalized time around the impact time $t-t_{imp}$ [-]');
 %     ylabel('C.P. velocity ${^C\dot{\mathbf{p}}_i}$ [m/s]');
 %     scatter(kf([indx_bf,indx_cf]),F([indx_bf,indx_cf]),'xk','linewidth',1) %Plot fitted points in continuous function
 %     scatter([indx_b,indx_c]-1-w_ext,dCp_meas(3,[indx_b,indx_c]),'r','linewidth',1) %Plot fitted points in discrete function
