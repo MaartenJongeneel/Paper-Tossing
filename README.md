@@ -34,8 +34,13 @@ If you are using this paper as reference, please refer to it as
 Requirements
 ===========
 The following datasets are required to run the code. They can be downloaded via the links below and should be placed in the [data](/data/) folder. 
- - [I_AM_Archive_3_BoxDrops.h5](https://doi.org/10.4121/17122553) : Raw data file containing box-drop experiments of Box003, Box004, and Box005.
- - [I_AM_Archive_5_ParamID_Box006.h5](https://doi.org/10.4121/21024007) : Archive containing experiments for parameter identification of Box006 
+ - [Archive_003_BoxDrops.h5](https://doi.org/10.4121/17122553) : Archive used for velocity based parameter identification of Box005.
+ - [Archive_005_ParamID_Box006.h5](https://doi.org/10.4121/21024007) : Archive used for velocity based parameter identification of Box006 
+ - [Archive_008_Box006_ParamID_Traj.h5](https://doi.org/10.4121/21387510) : Archive used for trajectory based parameter identification of Box006
+ - [Archive_009_Box005_Repeatability.h5](https://doi.org/10.4121/21387606) : Archive used for trajectory based parameter identification of Box005
+ - [Archive_011_Box005Box006_Validation](https://doi.org/10.4121/21399657) : Archive containing experiments for validation of tosses with Box005 and Box006 on stationary and running conveyor
+
+
 
 Introduction
 ============
@@ -98,7 +103,6 @@ In case you have questions or if you encountered an error, please contact us thr
 - [ ] Update paramID subdirectory
     - [ ] Clean up the scripts
     - [X] Make Param ID for AGX optional 
-    - [ ] Make scripts for paramID in MuJoCo
     - [ ] Write proper README.md for that subdirectory
 - [ ] Update the rest-pose prediction scripts
     - [ ] Make simulations in AGX optional (s.t. one can run also only Matlab)
