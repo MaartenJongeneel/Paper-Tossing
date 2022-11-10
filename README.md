@@ -24,7 +24,7 @@ IEEE Transactions on Robotics (T-RO)
 If you are using this paper as reference, please refer to it as
 ```bibtex
 @article{Jongeneel2022_ParameterIdentification,
-    author = {M J Jongeneel, L Poort, N van de Wouw, and A Saccon},
+    author = {M J Jongeneel and L Poort and N van de Wouw and A Saccon},
     title = {{Parameter Identification and Validation of Nonsmooth Impact Models with Friction}},
     journal = {IEEE Transactions on Robotics (T-RO)},
     year = {2023},
