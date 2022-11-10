@@ -12,7 +12,7 @@ with Friction
 <a href="https://www.tue.nl/en/research/researchers/alessandro-saccon/">Alessandro Saccon</a>
 <br>
 <br>
-Conference TBD
+IEEE Transactions on Robotics (T-RO)
 <br>
 <br>
 <a href="/">[Early Paper on HAL]</a>
@@ -23,12 +23,11 @@ Conference TBD
 
 If you are using this paper as reference, please refer to it as
 ```bibtex
-@inproceedings{Jongeneel2022_ParameterIdentification,
+@article{Jongeneel2022_ParameterIdentification,
     author = {M J Jongeneel, L Poort, N van de Wouw, and A Saccon},
     title = {{Parameter Identification and Validation of Nonsmooth Impact Models with Friction}},
-    booktitle = {TBD},
-    year = {TBD},
-    month = {TBD}
+    journal = {IEEE Transactions on Robotics (T-RO)},
+    year = {2023},
 }
 ```
 Requirements
