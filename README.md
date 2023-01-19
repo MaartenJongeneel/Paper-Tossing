@@ -65,14 +65,18 @@ The code in this repository can be split into two main parts. The first part foc
     </div>
 </div> 
 
-In the experiments, different objects are used. Below, the different boxes are shown. From left to right: Box004, Box005, Box006, and Box007. Detailed information about the objects can be found on the [Impact-Aware Robotics Database](https://impact-aware-robotics-database.tue.nl/objects).
+In the experiments, different objects are used. Below, the different boxes are shown. Detailed information about the objects can be found on the [Impact-Aware Robotics Database](https://impact-aware-robotics-database.tue.nl/objects).
 
-<div style = "display: flex; align="center">
-<img src="figures/GITimg/Box004.jpg" alt="drawing" width=25%/>
-<img src="figures/GITimg/Box005.jpg" alt="drawing" width=25%/>
-<img src="figures/GITimg/Box006.jpg" alt="drawing" width=25%/>
-<img src="figures/GITimg/Box007.jpg" alt="drawing" width=25%/>
+<div align="center">
+    <div style = "display: flex; align="center">
+        <img src="figures/GITimg/Box004.jpg" alt="drawing" width=24%/>
+        <img src="figures/GITimg/Box005.jpg" alt="drawing" width=24%/>
+        <img src="figures/GITimg/Box006.jpg" alt="drawing" width=24%/>
+        <img src="figures/GITimg/Box007.jpg" alt="drawing" width=24%/>
+    </div>
+    <p>Figure 2: The different boxes used in experiments. From left to right: Box004, Box005, Box006, and Box007.</p>
 </div>
+<br>
 
 The experiments for parameter identification are stored in Archives. The archive containing box-impact experiments for Box003, Box004, and Box005 can be found [here](https://doi.org/10.4121/17122553). 
 
@@ -86,7 +90,7 @@ In the models used, the coefficient of friction (COF) and coefficient of restitu
         <img src="figures/GITimg/CostAlgoryx.jpg" alt="drawing" width=25%/>
         <img src="figures/GITimg/CostMatlab.jpg" alt="drawing" width=25%/>
     </div>
-    <p>Figure 2: Velocity based cost of Algoryx (left) and MATLAB (right).</p>
+    <p>Figure 3: Velocity based cost of Algoryx (left) and MATLAB (right).</p>
 </div>
 <br>
 
