@@ -60,20 +60,18 @@ Table of content
 The code in this repository can be split into two main parts. The first part focusses on parameter identification and the second part focusses on the long-horizon prediction performance. Experiments are executed to obtain datasets for identification and performance analysis on the setup shown below.
 
 <div align="center">
-<div style = "display: flex; align="center">
-<img src="figures/ExperimentalSetup.PNG" width="50%"/> 
-</div>
+    <div style = "display: flex; align="center">
+    <img src="figures/GITimg/ExperimentalSetup.PNG" width="50%"/> 
+    </div>
 </div> 
 
-In the experiments, different objects are used. Below, the different boxes are shown. From left to right: Box003, Box004, Box005, Box006, Box007, and Box009. Detailed information about the objects can be found on the [Impact-Aware Robotics Database](https://impact-aware-robotics-database.tue.nl/objects).
+In the experiments, different objects are used. Below, the different boxes are shown. From left to right: Box004, Box005, Box006, and Box007. Detailed information about the objects can be found on the [Impact-Aware Robotics Database](https://impact-aware-robotics-database.tue.nl/objects).
 
 <div style = "display: flex; align="center">
-<img src="figures/Box003.jpg" alt="drawing" width=16%/> 
-<img src="figures/Box004.jpg" alt="drawing" width=16%/>
-<img src="figures/Box005.jpg" alt="drawing" width=16%/>
-<img src="figures/Box006.jpg" alt="drawing" width=16%/>
-<img src="figures/Box007.jpg" alt="drawing" width=16%/>
-<img src="figures/Box009.jpg" alt="drawing" width=16%/>
+<img src="figures/GITimg/Box004.jpg" alt="drawing" width=25%/>
+<img src="figures/GITimg/Box005.jpg" alt="drawing" width=25%/>
+<img src="figures/GITimg/Box006.jpg" alt="drawing" width=25%/>
+<img src="figures/GITimg/Box007.jpg" alt="drawing" width=25%/>
 </div>
 
 The experiments for parameter identification are stored in Archives. The archive containing box-impact experiments for Box003, Box004, and Box005 can be found [here](https://doi.org/10.4121/17122553). 
@@ -81,18 +79,30 @@ The experiments for parameter identification are stored in Archives. The archive
 <p>&nbsp;</p>
 
 ## Part 1: Parameter identification
-In the models used, the coefficient of friction (COF) and coefficient of restitution (COR) need to be identified, as they differ per object/environment combination. There are two metrics that are used for the identification of the parameters. The first metric is a *velocity based* metric, where the loss function is based on a comparison between predicted and measured post-impact velocity, given a pre-impact object state. The second metric is a *trajectory based* metric, where the loss function is based on a comparison between a measured and simulated trajectory, and the optimum parameters are the ones that minimize this error. The specific code for this part can be found in the [paramID](/paramID/) folder.
+In the models used, the coefficient of friction (COF) and coefficient of restitution (COR) need to be identified, as they differ per object/environment combination. There are two metrics that are used for the identification of the parameters. The first metric is a *velocity based* metric, where the loss function is based on a comparison between predicted and measured post-impact velocity, given a pre-impact object state.
+
+<div align="center">
+    <div style = "display: flex; align="center">
+        <img src="figures/GITimg/CostAlgoryx.png" alt="drawing" width=25%/>
+        <img src="figures/GITimg/CostMatlab.png" alt="drawing" width=25%/>
+    </div>
+    <p>Figure 2: Velocity based cost of Algoryx (left) and MATLAB (right).</p>
+</div>
+<br>
+
+ The second metric is a *trajectory based* metric, where the loss function is based on a comparison between a measured and simulated trajectory, and the optimum parameters are the ones that minimize this error. The specific code for this part can be found in the [paramID](/paramID/) folder.
 
 ## Part 2: Prediction performance
 
 # Installation
 The code of this repository is all written in MATLAB and can directly be pulled from this repository. The datasets as written under [Requirements](#requirements) should be downloaded and placed in the [data](/data/) folder.
 
-# Usage of the scripts
+# Approach
+
 
 
 # Contact
-In case you have questions or if you encountered an error, please contact us through the "Issues" functionality on GIT. 
+In case you have questions or if you encountered an error, please contact us through the "Issues" functionality on GIT. Alternatively you can send an email to [Maarten Jongeneel](mailto:m.j.jongeneel@tue.nl).
 
 # TODO
 - [ ] Write a proper README.md
