@@ -61,7 +61,7 @@ The code in this repository can be split into two main parts. The first part foc
 
 <div align="center">
     <div style = "display: flex; align="center">
-    <img src="figures/GITimg/ExperimentalSetup.PNG" width="50%"/> 
+    <img src="figures/GITimg/ExperimentalSetup.jpg" width="50%"/> 
     </div>
 </div> 
 
@@ -83,8 +83,8 @@ In the models used, the coefficient of friction (COF) and coefficient of restitu
 
 <div align="center">
     <div style = "display: flex; align="center">
-        <img src="figures/GITimg/CostAlgoryx.png" alt="drawing" width=25%/>
-        <img src="figures/GITimg/CostMatlab.png" alt="drawing" width=25%/>
+        <img src="figures/GITimg/CostAlgoryx.jpg" alt="drawing" width=25%/>
+        <img src="figures/GITimg/CostMatlab.jpg" alt="drawing" width=25%/>
     </div>
     <p>Figure 2: Velocity based cost of Algoryx (left) and MATLAB (right).</p>
 </div>
