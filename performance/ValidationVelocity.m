@@ -13,14 +13,13 @@ close all; set(groot,'defaulttextinterpreter','latex'); set(groot,'defaultAxesTi
 
 %% ------------------------------ Settings ------------------------------%%
 %These will be input parsers to a function
-Object = 'Box007';
+Object = 'Box006';
 Environment = "Conveyor002";  %Select what conveyor you want to consider
 impact_data = append('paramID/',Object,'_Vel/',Object,'_impacts.mat');
-AGXResult_h5file = append('paramID/',Object,'_Vel/',Object,'_ParamID_Vel_BoxTossBatch_result.hdf5');
-evalAlgoryx = true;
+% AGXResult_h5file = append('paramID/',Object,'_Vel/',Object,'_ParamID_Vel_BoxTossBatch_result.hdf5');
+evalAlgoryx = false;
 evalMatlab = true;
 evalMuJoCo = false;
-
 
 dt        = 1/360;  %OptiTrack time step
 g         = 9.81;   %Gravitational constant                    [m/s^2]
@@ -29,9 +28,19 @@ w_ext     = 5;      %extension window
 endframe  = 11;     %Determine to what frame to run MATLAB
 weight    = [1 1 1 0.1 0.1 0.1]; %Weight of the cost function
 
-mu = 0:0.05:1;      %Define the parameter range of mu for which you want to run simulations
-eN = 0:0.05:1;      %Define the parameter range of eN for which you want to run simulations
-eT = 0;             %Define the parameter range of eT for which you want to run simulations
+MATLAB.Box004.Vel   = [0.40 0.00 0.60]; %eN eT mu
+MATLAB.Box004.Traj  = [0.00 0.00 0.45]; %eN eT mu [0.05 0.00 0.45]; %eN eT mu
+MATLAB.Box005.Vel   = [0.35 0.00 0.45]; %eN eT mu
+MATLAB.Box005.Traj  = [0.00 0.00 0.45]; %eN eT mu [0.10 0.00 0.45]; %eN eT mu
+MATLAB.Box006.Vel   = [0.40 0.00 0.25]; %eN eT mu 
+MATLAB.Box006.Traj  = [0.00 0.40 0.40]; %eN eT mu [0.25 0.00 0.40]; %eN eT mu
+MATLAB.Box007.Vel   = [];
+MATLAB.Box007.Traj  = [];
+
+ObjStr = "Box006"; %The object for which you want to do paramID
+ImpPln = "ConveyorPart002"; %"GroundPlane001";
+Param = "Vel";  %Vel or Traj based parameters are tested 
+
 doPlot    = false;
 doSave    = false;
 
@@ -58,10 +67,6 @@ imp_sel = find(ind_Tot);                       %Selected impact events
 
 maxImpactEvel = length(imp_sel);  %Determine to what impact you want to evalute. Max value should be smaller than length(imp_sel) 
 
-%Some parameters
-k = (-w_ext:w_ext)';        % Crude indices, comply with OptiTrack freq. 
-kf = (-w_ext:0.01:w_ext)';  % Refined indices for fitting purposes
-
 %If Algoryx is used, load the simulation results
 if evalAlgoryx    
     AGXData = readH5(AGXResult_h5file);
@@ -86,7 +91,7 @@ if evalAlgoryx
     % simulations, we delete the values here
     clear mu eN eT
     
-    for is = 1:maxImpactEvel
+    for is = 1%:maxImpactEvel
         BCV_CBef   = cell2mat(impacts.BCV_CBef(imp_sel(is),:));
         MH_C       = impacts.MH_C(imp_sel(is));
         Mo_C       = MH_C{1}(1:3,4);
@@ -154,15 +159,8 @@ end
 
 
 %% -------------------- Evaluate the impacts Matlab --------------------%%
-if evalMatlab    
-    %Obtain the vectors of mu, eN, and eT for which we run the
-    %parameter identification. If evalAlgoryx is true, the vectors for mu1,
-    %eN1, and eT1 are defined there. Otherwise, it will grab the defaults.
-    muvec = repmat(mu,1,length(eN)*length(eT));
-    eNvec = repmat(repelem(eN,length(mu)),1,length(eT));
-    eTvec = repelem(eT,length(mu)*length(eN));
-            
-    for is = 1:maxImpactEvel       
+if evalMatlab
+    for is = 1:maxImpactEvel
         %Load impact data from struct
         MH_B_meas  = impacts.MH_B(imp_sel(is),:);
         CH_B_meas  = impacts.CH_B(imp_sel(is),:);
@@ -174,46 +172,31 @@ if evalMatlab
         Mo_C       = MH_C{6}(1:3,4);   %Take position at moment of impact
 
         indx_c = impacts.indx(imp_sel(is),4) - impacts.indx(imp_sel(is),2)+6;
-        
+
         %Load box parameters
         box.inertia.ds = impacts.box.M{imp_sel(is)};    %Inertia tensor
         box.vertices.ds = impacts.box.V{imp_sel(is)}'; %Vertices
         box.mass.ds = impacts.box.M{imp_sel(is)}(1);  %Mass
-        
+
         %Vertices
         Bp = box.vertices.ds';
-                        
-        for ip = 1:(length(mu)*length(eN)*length(eT)) %For all parameters   
-            %Run the Matlab simulation
-            [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_meas{1}(1:3,4),MH_B_meas{1}(1:3,1:3),BV_CBaf{1}(1:3,1),BV_CBaf{1}(4:6,1),eNvec(ip),eTvec(ip),muvec(ip),box,MR_C,Mo_C,dt,endframe);
-            MH_B_M(:,:,:,ip) = cat(3,MH_B_MATLAB{:});
-            BV_MB_M(:,:,ip) = BV_MB_MATLAB;
 
-            for ii = 1:endframe
-                BCV_MB_M(:,ii,ip) = [MR_C\MH_B_M(1:3,1:3,ii,ip)*BV_MB_M(1:3,ii,ip); MR_C\MH_B_M(1:3,1:3,ii,ip)*BV_MB_M(4:6,ii,ip)];
-                for iv = 1:length(Bp)                    
-                    Cp_m(:,iv,ii)   = CH_B_meas{ii}(1:3,4)+CH_B_meas{ii}(1:3,1:3)*(Bp(:,iv));
-                    Cp_M(:,iv,ii,ip) = MR_C\(MH_B_MATLAB{ii}(1:3,4) - Mo_C)+(MR_C)\MH_B_M(1:3,1:3,ii,ip)*(Bp(:,iv));
-                    dCp_M(:,iv,ii,ip) = [MR_C\MH_B_M(1:3,1:3,ii,ip) -MR_C\MH_B_M(1:3,1:3,ii,ip)*hat(Bp(:,iv))]*BV_MB_M(:,ii,ip);
-                end
+        %Run the Matlab simulation
+        [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_meas{1}(1:3,4),MH_B_meas{1}(1:3,1:3),BV_CBaf{1}(1:3,1),BV_CBaf{1}(4:6,1),MATLAB.(ObjStr).(Param)(1),MATLAB.(ObjStr).(Param)(2),MATLAB.(ObjStr).(Param)(3),box,MR_C,Mo_C,dt,endframe);
+        MH_B_M(:,:,:,is) = cat(3,MH_B_MATLAB{:});
+        BV_MB_M(:,:,is) = BV_MB_MATLAB;
+
+        for ii = 1:endframe
+            BCV_MB_M(:,ii,is) = [MR_C\MH_B_M(1:3,1:3,ii,is)*BV_MB_M(1:3,ii,is); MR_C\MH_B_M(1:3,1:3,ii,is)*BV_MB_M(4:6,ii,is)];
+            for iv = 1:length(Bp)
+                Cp_m(:,iv,ii)   = CH_B_meas{ii}(1:3,4)+CH_B_meas{ii}(1:3,1:3)*(Bp(:,iv));
+                Cp_M(:,iv,ii,is) = MR_C\(MH_B_MATLAB{ii}(1:3,4) - Mo_C)+(MR_C)\MH_B_M(1:3,1:3,ii,is)*(Bp(:,iv));
+                dCp_M(:,iv,ii,is) = [MR_C\MH_B_M(1:3,1:3,ii,is) -MR_C\MH_B_M(1:3,1:3,ii,is)*hat(Bp(:,iv))]*BV_MB_M(:,ii,is);
             end
+        end
 
-            mu_i = find(muvec(ip) == mu);  eN_i = find(eNvec(ip) == eN); eT_i = find(eTvec(ip) == eT);
-            
-            %Compute the cost
-            E_MATLAB(mu_i,eN_i,eT_i,is)= norm(diag(weight)*(BCV_CBef(:,indx_c)-BCV_MB_M(:,indx_c,ip))); 
-        end
-        
-        CurrentE_MATLAB = E_MATLAB(:,:,:,is);
-        [~,optMATLAB_idx] = min(CurrentE_MATLAB(:));
-        
-        [a1,b1,c1]=ind2sub(size(E_MATLAB),optMATLAB_idx);
-        if length(a1)==1 && length(b1)==1 && length(c1)==1
-            MATLABmu_opt(is) = mu(a1);
-            MATLABeN_opt(is) = eN(b1);
-            MATLABeT_opt(is) = eT(c1);
-        end
-        MATLABwi(is) = E_MATLAB(a1,b1,c1,is);
+        %Compute the cost
+        E_MATLAB(is)= norm(diag(weight)*(BCV_CBef(:,indx_c)-BCV_MB_M(:,indx_c,is)));
     end
 end
 
@@ -235,46 +218,16 @@ end
 %%
 close all;
 
-lowlim = 0.05;
-uplim = 0.8;
-
-if evalAlgoryx && evalMatlab
-    good = (MATLABmu_opt< uplim) & (MATLABmu_opt > lowlim) & (MATLABeN_opt < uplim) & (MATLABeN_opt > lowlim)...
-    & (AGXmu_opt< uplim) & (AGXmu_opt > lowlim) & (AGXeN_opt < uplim) & (AGXeN_opt > lowlim);
-elseif evalAlgoryx && ~evalMatlab
-    good = (AGXmu_opt< uplim) & (AGXmu_opt > lowlim) & (AGXeN_opt < uplim) & (AGXeN_opt > lowlim);
-elseif ~evalAlgoryx && evalMatlab
-    good = (MATLABmu_opt< uplim) & (MATLABmu_opt > lowlim) & (MATLABeN_opt < uplim) & (MATLABeN_opt > lowlim);
-end
-if evalAlgoryx
-    amu = AGXmu_opt(good);
-    aeN = AGXeN_opt(good);
-    awi = AGXwi(good);   %Take the good measurements
-    awi = 1./awi;        %Flip the weights
-    awi = awi./sum(awi); %Normalize the weights
-    SUMAGX = (1/length(E_AGX(1,1,1,good)))*sum(E_AGX(:,:,:,good),4);
-end
-if evalMatlab
-    mmu = MATLABmu_opt(good);
-    meN = MATLABeN_opt(good);
-    mwi = MATLABwi(good); %Take the good measurements
-    mwi = 1./mwi;         %Flip the weights
-    mwi = mwi./sum(mwi);  %Normalize the weights
-    SUMMATLAB = (1/length(E_MATLAB(1,1,1,good)))*sum(E_MATLAB(:,:,:,good),4);
-end
-
-clear meanM_mu stdM_mu meanM_eN stdM_eN meanA_mu stdA_mu meanA_eN stdA_eN
-
-%Randomly sample from data, without replacement:
-[~,idx] = datasample(mmu,length(mmu),'Replace',false);
-
 %Select the indices that indicate the time of pre- and post-impact velocity
-is = 46; %is = 136; %Box006
+is = 120; %is = 136; %Box006
 
 Ia = impacts.indx(imp_sel(is),2) -5;
 Ib = impacts.indx(imp_sel(is),3);
 Ic = impacts.indx(imp_sel(is),4);
 Id = impacts.indx(imp_sel(is),2) +5;
+
+indx_b = Ib-Ia+1;
+indx_c = Ic-Ia+1;
 
 dCp_meas   = cell2mat(impacts.dCo_p(imp_sel(is),:));
 BV_CB      = impacts.BV_CB(imp_sel(is),:);
@@ -284,37 +237,9 @@ BCV_CBaf   = cell2mat(impacts.BCV_CBaf(imp_sel(is),:));
 BCV_CBef   = cell2mat(impacts.BCV_CBef(imp_sel(is),:));
 V_impact   = impacts.indx(imp_sel(is),1);
 
-if evalMatlab  
-    %Plot the combined cost of Matlab
-    figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1));
-    surf(eN,mu,SUMMATLAB); axis square;
-    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{i=1}^N L_{vel}(\mu,e_N)_i$');
-    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
-    xlim([0 1]);
-    ylim([0 1]);
-    view(-40,15);
-    if doSave;fig = gcf;fig.PaperPositionMode = 'auto';fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/',Object,'/Cost_SUMMATLAB.pdf'),'-dpdf','-vector'); end
-end
-if evalAlgoryx    
-    % Plot the combined cost of AGX
-    figure('rend','painters','pos',[pp{2,5} 0.7*sizex sizey]);
-    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1));
-    surf(eN,mu,SUMAGX); axis square;
-    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{i=1}^N L_{vel}(\mu,e_N)_i$');
-    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
-    xlim([0 1]);
-    ylim([0 1]);
-    view(-40,15);
-    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/',Object,'/Cost_SUMAGX.pdf'),'-dpdf','-vector'); end
-    
-end
-    
-%
+%Some parameters
+k = (-w_ext:w_ext)';        % Crude indices, comply with OptiTrack freq. 
+kf = (-w_ext:0.01:w_ext)';  % Refined indices for fitting purposes
 %Minimum velocity difference from steady state in percentage
 Vper = 0.03; 
 
@@ -345,10 +270,10 @@ figure('rend','painters','pos',[pp{1,1} sizex sizey]);
     axes(ha(1));
     p1 = plot(k+impacts.indx(imp_sel(is),2),dCp_meas(3,:),'color',color.Meas,'LineWidth',1.5);
     grid; hold('On')
-    if evalMatlab;  p2 = plot(k+impacts.indx(imp_sel(is),2),squeeze(dCp_M(3,V_impact,:,optMATLAB_idx)),'color',color.Matlab,'LineWidth',1.5); end
+    if evalMatlab;  p2 = plot(k+impacts.indx(imp_sel(is),2),squeeze(dCp_M(3,V_impact,:,is)),'color',color.Matlab,'LineWidth',1.5); end
     p4 = plot(kf+impacts.indx(imp_sel(is),2),F,'--k','LineWidth',1);
     p5 = scatter(kf([indx_bf,indx_cf])+impacts.indx(imp_sel(is),2),F([indx_bf,indx_cf]),'xk','linewidth',1); %Plot fitted points in continuous function
-    p6 = scatter([indx_b,indx_c]-1-w_ext+impacts.indx(imp_sel(is),2),dCp_meas(3,[indx_b,indx_c]),'r','linewidth',1); %Plot fitted points in discrete function
+    p6 = scatter([Ib Ic],dCp_meas(3,[indx_b,indx_c]),'r','linewidth',1); %Plot fitted points in discrete function
     if evalAlgoryx 
         p3 =    plot(k+impacts.indx(imp_sel(is),2),squeeze(dCp_AGX(3,V_impact,(1:11),optAGX_idx)),'color',color.Algoryx,'linewidth',1.5);
         legend([p1 p2 p3 p4 p5 p6],'$(^C\dot{\mathbf{p}}_1)_z$-Measured','$(^C\dot{\mathbf{p}}_1)_z$-Matlab','$(^C\dot{\mathbf{p}}_1)_z$-Algoryx','$(^C\dot{\mathbf{p}}_1)_z$-fit','Cont. indices','Disc. indices $b$, $c$','Location','NorthWest'); 
@@ -367,10 +292,10 @@ figure('rend','painters','pos',[pp{1,1} sizex sizey]);
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,'LaTeX/figures/CPVelocity_CentralEuler.pdf','-dpdf','-vector')
     end
-%% Paper figures
+% Paper figures
 
 %plot measured contact point velocities
-figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
+figure('rend','painters','pos',[pp{1,2} sizex 1.2*sizey]);
     ha = tight_subplot(1,1,[.12 .07],[.18 .23],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     p1 = plot(k,dCp_meas(1,:),'color',color.Red,'LineWidth',1.5);
@@ -407,7 +332,8 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,'figures/CPVelocity_CentralEuler.pdf','-dpdf','-vector')
     end
-%% Combined plot
+
+% Combined plot
     figure('rend','painters','pos',[pp{2,1} sizex 1.7*sizey]);
     ha = tight_subplot(2,1,[.08 .07],[.1 .01],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
@@ -419,6 +345,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
     ylim([min(min(BCV_CB(1:3,:)))-0.15 max(max(BCV_CB(1:3,:)))+0.15])
     ha(1).XTick = k+Ia+5;
+    xlim([impacts.indx(imp_sel(is),2)-5 impacts.indx(imp_sel(is),2)+5]);
     xline(Ia,'-.')
     xline(Ib,'-.')
     xline(Ic,'-.')
@@ -432,15 +359,13 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     xlabel('Time index $k$ [-]');
     ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
     ha(2).XTick = k+Ia+5;
+    xlim([impacts.indx(imp_sel(is),2)-5 impacts.indx(imp_sel(is),2)+5]);
     ylim([min(min(BCV_CB(4:6,:)))-0.3 max(max(BCV_CB(4:6,:)))+0.3])
     xline(Ia,'-.')
     xline(Ib,'-.')
     xline(Ic,'-.')
     xline(Id,'-.')
-%     L1 = legend([hm(1) hm(2) hm(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','Fitted','NumColumns',4,'location','northeast');
-%     L1.Position(2) = 0.96;
-%     L1.Position(1) = 0.52-(L1.Position(3)/2);
-%     print(gcf,'MeasuredVelocities.png','-dpng','-r500');    
+  
     if doSave
         fig = gcf;
         fig.PaperPositionMode = 'auto';
@@ -455,13 +380,14 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     ha = tight_subplot(2,1,[.08 .07],[.1 .01],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     hm = plot(Ia:Id,BCV_CB(1:3,:),'linewidth',1); grid on; hold on;                           %Measurement
-    hM = plot(Ia:Id,BCV_MB_M(1:3,1:11,optMATLAB_idx),'linewidth',1,'LineStyle','--');            %MATLAB data
+    hM = plot(Ia:Id,BCV_MB_M(1:3,1:11,is),'linewidth',1,'LineStyle','--');            %MATLAB data
     set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
     set(hM,{'color'},{color.Red; color.Green; color.Blue})
     p = plot(Ia:Ib,BCV_CBaf(1:3,1:indx_b)','--','color','k','LineWidth',1.2);
     plot(Ic:Id,BCV_CBef(1:3,indx_c:11)','--','color','k','LineWidth',1.2);
     ylim([min(min(BCV_CB(1:3,:)))-0.15 max(max(BCV_CB(1:3,:)))+0.15]);
     ha(1).XTick = Ia:Id;
+    xlim([impacts.indx(imp_sel(is),2)-5 impacts.indx(imp_sel(is),2)+5]);
     xline(Ia,'-.')
     xline(Ib,'-.')
     xline(Ic,'-.')
@@ -472,12 +398,13 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     
     axes(ha(2));
     hm = plot(Ia:Id,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                          %Measurement
-    hM = plot(Ia:Id,BCV_MB_M(4:6,1:11,optMATLAB_idx),'linewidth',1,'LineStyle','--');           %MATLAB data
+    hM = plot(Ia:Id,BCV_MB_M(4:6,1:11,is),'linewidth',1,'LineStyle','--');           %MATLAB data
     set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
     set(hM,{'color'},{color.Red; color.Green; color.Blue})
     plot(Ia:Ib,BCV_CBaf(4:6,1:indx_b)','--','color','k','LineWidth',1.2);
     plot(Ic:Id,BCV_CBef(4:6,indx_c:11)','--','color','k','LineWidth',1.2);
     ylim([min(min(BCV_CB(4:6,:)))-0.3 max(max(BCV_CB(4:6,:)))+0.3])
+    xlim([impacts.indx(imp_sel(is),2)-5 impacts.indx(imp_sel(is),2)+5]);
     xline(Ia,'-.')
     xline(Ib,'-.')
     xline(Ic,'-.')
@@ -485,12 +412,7 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
     xlabel('Time index $k$ [-]');
     ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
     ha(2).XTick = Ia:Id;
-%     L1 = legend([hm(1) hm(2) hm(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','Fitted','NumColumns',4,'location','northeast');
-%     L1 = legend([hm(1) hm(2) hm(3) hM(1) hM(2) hM(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','$x$-MATLAB','$y$-MATLAB','$z$-MATLAB','Fitted','NumColumns',3,'location','northeast');
-%     L1.Position(2) = 0.9035;
-%     L1.Position(1) = 0.52-(L1.Position(3)/2);
-%     print(gcf,'VelMATLAB.png','-dpng','-r500');
-    
+
     if doSave
         fig = gcf;
         fig.PaperPositionMode = 'auto';
@@ -499,52 +421,48 @@ figure('rend','painters','pos',[pp{1,1} sizex 1.2*sizey]);
         print(fig,'figures/VelResMATLAB.pdf','-dpdf','-vector')
     end
 
-% Combined plot AGX Results
-    figure('rend','painters','pos',[pp{2,3} sizex 1.7*sizey]);
-    ha = tight_subplot(2,1,[.08 .07],[.1 .01],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
-    axes(ha(1));
-    hm = plot(Ia:Id,BCV_CB(1:3,:),'linewidth',1); grid on; hold on;                           %Measurement
-    hA = plot(Ia:Id,BCV_MB_AGX(1:3,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');            %MATLAB data
-    set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
-    set(hA,{'color'},{color.Red; color.Green; color.Blue})
-    p = plot(Ia:Ib,BCV_CBaf(1:3,1:indx_b)','--','color','k','LineWidth',1.2);
-    plot(Ic:Id,BCV_CBef(1:3,indx_c:11)','--','color','k','LineWidth',1.2);
-    xlabel('Time index $k$ [-]');
-    ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
-    ylim([min(min(BCV_CB(1:3,:)))-0.15 max(max(BCV_CB(1:3,:)))+0.15]);
-    ha(1).XTick = Ia:Id;
-    xline(Ia,'-.')
-    xline(Ib,'-.')
-    xline(Ic,'-.')
-    xline(Id,'-.')
-    
-    axes(ha(2));
-    hm = plot(Ia:Id,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                          %Measurement
-    hA = plot(Ia:Id,BCV_MB_AGX(4:6,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');           %MATLAB data
-    set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
-    set(hA,{'color'},{color.Red; color.Green; color.Blue})
-    plot(Ia:Ib,BCV_CBaf(4:6,1:indx_b)','--','color','k','LineWidth',1.2);
-    plot(Ic:Id,BCV_CBef(4:6,indx_c:11)','--','color','k','LineWidth',1.2);
-    xlabel('Time index $k$ [-]');
-    ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
-    ylim([min(min(BCV_CB(4:6,:)))-0.3 max(max(BCV_CB(4:6,:)))+0.3])
-    ha(2).XTick = Ia:Id;
-    xline(Ia,'-.')
-    xline(Ib,'-.')
-    xline(Ic,'-.')
-    xline(Id,'-.')
-%     L1 = legend([hm(1) hm(2) hm(3) hA(1) hA(2) hA(3) p(1)],'$x$-meas','$y$-meas','$z$-meas','$x$-Algoryx','$y$-Algoryx','$z$-Algoryx','Fitted','NumColumns',3,'location','northeast');
-%     L1.Position(2) = 0.90;
-%     L1.Position(1) = 0.52-(L1.Position(3)/2);
-%     print(gcf,'VelAGX.png','-dpng','-r500');
-    
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'figures/VelResAGX.pdf','-dpdf','-vector')
-    end
+% % Combined plot AGX Results
+%     figure('rend','painters','pos',[pp{2,3} sizex 1.7*sizey]);
+%     ha = tight_subplot(2,1,[.08 .07],[.1 .01],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+%     axes(ha(1));
+%     hm = plot(Ia:Id,BCV_CB(1:3,:),'linewidth',1); grid on; hold on;                           %Measurement
+%     hA = plot(Ia:Id,BCV_MB_AGX(1:3,(1:11),is),'linewidth',1,'LineStyle','--');            %MATLAB data
+%     set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
+%     set(hA,{'color'},{color.Red; color.Green; color.Blue})
+%     p = plot(Ia:Ib,BCV_CBaf(1:3,1:indx_b)','--','color','k','LineWidth',1.2);
+%     plot(Ic:Id,BCV_CBef(1:3,indx_c:11)','--','color','k','LineWidth',1.2);
+%     xlabel('Time index $k$ [-]');
+%     ylabel('Linear velocity $^{B[C]}$\boldmath${v}_{C,B}$ [m/s]');
+%     ylim([min(min(BCV_CB(1:3,:)))-0.15 max(max(BCV_CB(1:3,:)))+0.15]);
+%     ha(1).XTick = Ia:Id;
+%     xline(Ia,'-.')
+%     xline(Ib,'-.')
+%     xline(Ic,'-.')
+%     xline(Id,'-.')
+%     
+%     axes(ha(2));
+%     hm = plot(Ia:Id,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                          %Measurement
+%     hA = plot(Ia:Id,BCV_MB_AGX(4:6,(1:11),is),'linewidth',1,'LineStyle','--');           %MATLAB data
+%     set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
+%     set(hA,{'color'},{color.Red; color.Green; color.Blue})
+%     plot(Ia:Ib,BCV_CBaf(4:6,1:indx_b)','--','color','k','LineWidth',1.2);
+%     plot(Ic:Id,BCV_CBef(4:6,indx_c:11)','--','color','k','LineWidth',1.2);
+%     xlabel('Time index $k$ [-]');
+%     ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
+%     ylim([min(min(BCV_CB(4:6,:)))-0.3 max(max(BCV_CB(4:6,:)))+0.3])
+%     ha(2).XTick = Ia:Id;
+%     xline(Ia,'-.')
+%     xline(Ib,'-.')
+%     xline(Ic,'-.')
+%     xline(Id,'-.')
+%    
+%     if doSave
+%         fig = gcf;
+%         fig.PaperPositionMode = 'auto';
+%         fig_pos = fig.PaperPosition;
+%         fig.PaperSize = [fig_pos(3) fig_pos(4)];
+%         print(fig,'figures/VelResAGX.pdf','-dpdf','-vector')
+%     end
 %%
 %Plot contact point trajectories over time
 figure('rend','painters','pos',[pp{1,2} sizex sizey]);
@@ -667,7 +585,7 @@ figure('pos',[pp{2,3} 319 150]);
         plotBox(MH_B_meas{ii},box,color.Meas,0);hold on;
         
         %Plot MATLAB box
-%         plotBox(MH_B_M(:,:,ii,optMATLAB_idx),box,color.Matlab,0); hold on;     
+        plotBox(MH_B_M(:,:,ii,optMATLAB_idx),box,color.Matlab,0); hold on;     
 
         %Plot new AGX box results
         plotBox(MH_B_AGX(:,:,ii,optAGX_idx),box,color.Algoryx,0);hold on;

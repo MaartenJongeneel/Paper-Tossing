@@ -6,8 +6,11 @@ addpath(genpath('readH5')); addpath('data');
 % long-horizon tosses and find the parameters that minimize the error in
 % position and orientation over the full trajectory
 %% Load the data
-data = readH5('220920_Box005_ParamID_Traj.h5');
+data = readH5('230104_Archive_017_Box004_ParamID_Traj.h5');
+% data = readH5('220920_Box005_ParamID_Traj.h5');
 % data = readH5('220920_Box006_ParamID_Traj.h5');
+% data = readH5('230104_Archive_019_Box007_ParamID_Traj.h5');
+
 
 %% Constants
 mu    = 0:0.05:1;  %Define the parameter range of mu for which you want to run simulations
@@ -23,8 +26,8 @@ color.Matlab = [237 176 33]/255;
 color.Algoryx = [77 191 237]/255;
 color.Meas = [128 128 128]/255;
 
-ObjStr = "Box005"; %The object for which you want to do paramID
-ImpPln = "GroundPlane001"; %"ConveyorPart001 GroundPlane001";
+ObjStr = "Box007"; %The object for which you want to do paramID
+ImpPln = "ConveyorPart002"; %"ConveyorPart001 GroundPlane001";
 
 %% If Algoryx is used, load the simulation results
 AGXResult_h5file = append('paramID/',ObjStr,'_Traj/',ObjStr,'_ParamID_Traj_BoxTossBatch_result.hdf5');
@@ -83,8 +86,31 @@ for ii = 1:length(fn)
         %--------------- Determine the moment of release ----------------%
         %Find the peaks of the position data (height) to find when the box is released from the hand
 
-        
-        if ObjStr == "Box005"
+        if ObjStr == "Box004"
+            if tel==10
+            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.085);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
+            else
+            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.095);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
+            end
+            id_rel = id_rel(end);
+
+            t = find(vecnorm(dMo_B(:,id_rel:end))<0.02); %Find the indices where difference in rel. pos. is small
+            x = diff(t)==1;
+            f = find([false,x]~=[x,false]);
+            g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
+            id_rest = t(f(2*g-1))+id_rel-1; % First t followed by >=N_pos consecutive numbers
+
+            figure; plot(((id_rel-20):id_rest+20)*dt,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
+                plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+                plot(id_rest*dt,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+                grid on;
+                xlim([id_rel-20,id_rest+20]*dt);
+                xlabel('Time [s]');
+                ylabel('$(^M\mathbf{o}_B)_z$ [m]');
+                pause
+                close all
+
+        elseif ObjStr == "Box005"
             t = find(vecnorm(dMo_B(:,4000:end))<0.02); %Find the indices where difference in rel. pos. is small
             x = diff(t)==1;
             f = find([false,x]~=[x,false]);
@@ -94,18 +120,16 @@ for ii = 1:length(fn)
             [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
             id_rel = id_rel(end);
 
-%             figure; plot(((id_rel-20):id_rest+20)*dt,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
-%             plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-%             plot(id_rest*dt,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-%             grid on;
-%             xlim([id_rel-20,id_rest+20]*dt);
-%             xlabel('Time [s]');
-%             ylabel('$(^M\mathbf{o}_B)_z$ [m]');
-%             pause
-%             close all
-        end
-
-        if ObjStr == "Box006"
+            figure; plot(((id_rel-20):id_rest+20)*dt,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
+                plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+                plot(id_rest*dt,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+                grid on;
+                xlim([id_rel-20,id_rest+20]*dt);
+                xlabel('Time [s]');
+                ylabel('$(^M\mathbf{o}_B)_z$ [m]');
+                pause
+                close all
+        elseif ObjStr == "Box006"
             t = find(vecnorm(dMo_B(:,170:end))<0.02); %Find the indices where difference in rel. pos. is small
             x = diff(t)==1;
             f = find([false,x]~=[x,false]);
@@ -120,12 +144,32 @@ for ii = 1:length(fn)
             end
             id_rel = id_rel(1);
 
-                        figure; plot(Mo_B(3,:,tel)); hold on;
-                            plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-                            plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-                            grid on;
-                            pause
-                            close all
+            figure; plot(Mo_B(3,:,tel)); hold on;
+                plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+                plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+                grid on;
+                pause
+                close all
+        elseif ObjStr == "Box007"
+            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.095);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
+            id_rel = id_rel(end);
+
+            t = find(vecnorm(dMo_B(:,id_rel:end))<0.02); %Find the indices where difference in rel. pos. is small
+            x = diff(t)==1;
+            f = find([false,x]~=[x,false]);
+            g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
+            id_rest = t(f(2*g-1))+id_rel-1; % First t followed by >=N_pos consecutive numbers
+            if isempty(id_rest) || id_rest> 700; id_rest = 700; end
+
+            figure; plot(((id_rel-20):id_rest+20)*dt,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
+                plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+                plot(id_rest*dt,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+                grid on;
+                xlim([id_rel-20,id_rest+20]*dt);
+                xlabel('Time [s]');
+                ylabel('$(^M\mathbf{o}_B)_z$ [m]');
+                pause
+                close all
         end
         
         %------------- Determine the relative release-pose --------------%
@@ -207,13 +251,15 @@ if evalAlgoryx
             MR_B_A = MH_B_AGX(1:3,1:3,:,cnt);                              %Simulated Rotation data
 
             %Compute the cost
-            for it = 1:NtimeidxA
+            Endidx = min(id(is,2)-id(is,1)+1,NtimeidxA); %We should normalize AGX and MATLAB over same time window (Matlab is also stopped after id(is,2)-id(is,1) timesteps)
+            clear e_pos_A e_rot_A %clear previous error values
+            for it = 1:Endidx
                 e_pos_A(it) = norm(Mo_B_meas(:,it)-Mo_B_A(:,it));
                 e_rot_A(it) = norm(logm(MR_B_meas(:,:,it)\MR_B_A(:,:,it))); 
             end
 
             %Cost function
-            E_AGX(mu_i,eN_i,eT_i,is) = 1/Ntimeidx * (1/Box.dimensions.ds(1)*sum(e_pos_A) + sum(e_rot_A));             
+            E_AGX(mu_i,eN_i,eT_i,is) = 1/Endidx * (1/Box.dimensions.ds(1)*sum(e_pos_A) + sum(e_rot_A));             
         end
         CurrentE_AGX = E_AGX(:,:,:,is);
         [~,optAGX_idx]= min(CurrentE_AGX(:));
@@ -252,13 +298,14 @@ if evalMatlab
             mu_i = find(muvec(ip) == mu);  eN_i = find(eNvec(ip) == eN); eT_i = find(eTvec(ip) == eT);
             
             %Compute the cost
+            clear e_pos e_rot %Clear previous error values
             for it = 1:Ntimeidx
                 e_pos(it) = norm(Mo_B_meas(:,it)-Mo_B_M(:,it));
                 e_rot(it) = norm(logm(MR_B_meas(:,:,it)\MR_B_M(:,:,it))); 
             end
 
             %Cost function
-            E_MATLAB(mu_i,eN_i,eT_i,is) = 1/Ntimeidx * (1/Box.dimensions.ds(1)*sum(e_pos) + sum(e_rot));            
+            E_MATLAB(mu_i,eN_i,eT_i,is) = 1/Ntimeidx * (1/Box.dimensions.ds(1)*sum(e_pos) + sum(e_rot)); 
         end
 
         CurrentE_MATLAB = E_MATLAB(:,:,:,is);
@@ -307,7 +354,7 @@ for  ii = 1:length(px)
 end 
 
 %Plot the cost of MATLAB simulation
-figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
+figure('rend','painters','pos',[pp{3,5} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMMATLAB); 
@@ -315,16 +362,18 @@ figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
     view(-40,15); 
     xlim([0 1]);
     ylim([0 1]);
-    zlim([0 12.5]);
+    zlim([0 3]);
+    clim([0.3 2.8]);
     xlabel('$e_N$');
     ylabel('$\mu$');
-    zlabel('$\frac{1}{N}\sum_{i=1}^NL_{traj}(\mu,e_N)_i$');
+    zlabel('$\frac{1}{M}\sum_{i=1}^ML_{traj}(i;\mu,e_N)$');
+    
 
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
     print(fig,append('figures/Traj_Based_Cost_Matlab'),'-dpdf','-vector'); end
 
 %Plot the cost of Algoryx simulation
-figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
+figure('rend','painters','pos',[pp{3,5} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMAGX); 
@@ -332,10 +381,11 @@ figure('rend','painters','pos',[pp{3,5} 0.7*sizex sizey]);
     view(-40,15); 
     xlim([0 1]);
     ylim([0 1]);
-    zlim([0 12.5]);
+    zlim([0 3]);
+    clim([0.3 2.8]);
     xlabel('$e_N$');
     ylabel('$\mu$');
-    zlabel('$\frac{1}{N}\sum_{i=1}^NL_{traj}(\mu,e_N)_i$');
+    zlabel('$\frac{1}{M}\sum_{i=1}^ML_{traj}(i;\mu,e_N)$');
 
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
     print(fig,append('figures/Traj_Based_Cost_Algoryx'),'-dpdf','-vector'); end
@@ -354,16 +404,16 @@ spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to positio
 
 %Plot the trajectory of the box
 figure('pos',[500 500 500 300]);
-    for ii=id(plotnr,1):5:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1
+    for ii=id(plotnr,1)+330:id(plotnr,1)+340 %id(plotnr,1):5:(id(plotnr,2))+10
         
         %plot Measured box
         g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,color.Meas,0);hold on;
         
         %Plot MATLAB box
-        g2 = plotBox(MH_B_M(:,:,ii-(id(plotnr,1)-1),1),Box,color.Matlab,0); hold on;     
+%         g2 = plotBox(MH_B_M(:,:,ii-(id(plotnr,1)-1),1),Box,color.Matlab,0); hold on;     
 
         %Plot new AGX box results
-        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Algoryx,0);hold on;
+        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),end),Box,color.Algoryx,0);hold on;
 
         %Plot the conveyor C
         table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
@@ -382,7 +432,7 @@ figure('pos',[500 500 500 300]);
         plot3([0 tip(1,3)],[0 tip(2,3)],[0 tip(3,3)],'b');
 
         grid on;axis equal;
-        axis([-0.4 0.6 -0.6 0.8 -0.05 0.3]);
+        axis([-0.4 0.6 -0.6 1.5 -0.05 0.3]);
         xlabel('x [m]');
         ylabel('y [m]');
         zlabel('z [m]');
@@ -391,12 +441,12 @@ figure('pos',[500 500 500 300]);
         view(-315,31);
 %         view(-90,0);
         text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
-        L1 = legend([g1 g2 ],'Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
-        L1.Position(2) = 0.90;
-        L1.Position(1) = 0.52-(L1.Position(3)/2);
+%         L1 = legend([g1 g2 ],'Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
+%         L1.Position(2) = 0.90;
+%         L1.Position(1) = 0.52-(L1.Position(3)/2);
         drawnow
         hold off
-%         pause()        
+        pause()        
 %         f = gcf;
 %         exportgraphics(f,append('Frame_',sprintf('%.2d.jpg',ii-(id(plotnr,1)-1))),'Resolution',500)
     end

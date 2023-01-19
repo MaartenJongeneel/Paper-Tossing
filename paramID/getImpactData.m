@@ -1,7 +1,7 @@
 % function impacts = getImpactData(h5file,measname)
 % h5file = "D:\OneDrive - TU Eindhoven\I.AM\9.Database\Archives_local\220426_ParamID_Box006.h5";
-h5file = "220907_I_AM_Archive_5_ParamID_Box006.h5";
-ObjStr = "Box006"; %The object for which you want to do paramID
+h5file = "230113_Archive_003_BoxDrops.h5";
+ObjStr = "Box004"; %The object for which you want to do paramID
 EnvStr = "Conveyor002"; %The Environment for which you want to do paramID
 % ImpPln = true; %Impact plane: false = no Motive impact plane, taking origin as impact plane. Otherwise, give the string name in ImpStr
 ImpPln = "GroundPlane001";
@@ -131,11 +131,11 @@ for iim = 1:length(fname)
             vrest = 1:8~=vertex;
             p1 = plot(Cp_z(vrest,:)','color',[0 0 0 0.2]); hold on; grid on;
             p2 = plot(Cp_z(vertex,:)','color',[0 0.4470 0.7410]);
-            p3 = plot(plocs(vertex),Cp_z(vertex,plocs(vertex)),'o','color',[0 0.4470 0.7410]);
+            p3 = plot(plocs(vertex),Cp_z(vertex,plocs(vertex)),'o','color',[0 0.4470 0.7410],'LineWidth',1.4,'MarkerSize',7);
             axis([240 450 -0.02 0.3]);
-            xlabel('Time index $t$ [-]');
-            ylabel('$(^C\mathbf{p}_i(t))_z$ [m]')
-            L1 = legend([p2 p3 p1(1)],'Trajectory of $(^C\mathbf{p}_1)_z$','Found impact time $t_{imp}$ = 275','Trajectory of $(^C\mathbf{p}_{i\neq1})_z$','location','northeast');
+            xlabel('Time index $k$ [-]');
+            ylabel('$(^C\mathbf{p}_i(k))_z$ [m]')
+%             L1 = legend([p2 p3 p1(1)],'Trajectory of $(^C\mathbf{p}_1)_z$','Found impact time $t_{imp}$ = 275','Trajectory of $(^C\mathbf{p}_{i\neq1})_z$','location','northeast');
             if doSave
                 fig = gcf;
                 fig.PaperPositionMode = 'auto';

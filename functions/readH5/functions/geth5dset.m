@@ -67,7 +67,8 @@ for id = 1:length(dsets)
         data.(StrName).ds = val;                          % Transfer dataset
         data.(StrName).attr = geth5attr(dset.Attributes); % Transfer attributes
     else
-        data.(StrName) = val;                             % Transfer dataset
+        StrName = dset.Name;
+        data.(StrName).ds = val;                             % Transfer dataset
     end
 end
 end

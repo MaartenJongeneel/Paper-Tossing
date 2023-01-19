@@ -7,8 +7,7 @@ addpath(genpath('readH5')); addpath('data');
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
 %% Load the data
-data = readH5('220920_Box005_Validation.h5'); %Validation of Box005
-% data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
+data = readH5('221021_Archive_011_Box005Box006_Validation.h5'); %Using dataset for validation also for sensitivity
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -27,26 +26,37 @@ Algoryx.Box006.Traj = [0.30 0.00 0.40]; %eN eT mu
 % Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
 
 
-ObjStr = "Box005"; %The object for which you want to do paramID
+ObjStr = "Box006"; %The object for which you want to do paramID
 ImpPln = "GroundPlane001";
-Param = "eN";  %Sensitivity of mu or eN 
+Param = "mu";  %Sensitivity of mu or eN 
 
 %% Loop through the data
 tel = 0;
 fn = fieldnames(data);
 for ii = 1:length(fn)
     if startsWith(fn{ii},'Rec')
+        %Get the object info
+        try
+            Box = data.(fn{ii}).OBJECT.(ObjStr);
+        catch
+            continue;
+        end
+        if contains(data.(fn{ii}).attr.note,"moving") || contains(data.(fn{ii}).attr.note,"running")
+            continue;
+        end
+
+        %Now we know this recording is used, we can update the teller
         tel = tel+1;
 
         %Get the data from the file
         Mocap = data.(fn{ii}).SENSOR_MEASUREMENT.Mocap;
         dt   = 1/double(Mocap.datalog.attr.sample_frequency);   %Timestep of the recording 
         
-        %Get the object info
-        Box = data.(fn{ii}).OBJECT.(ObjStr);
+
 
         %Get the tranforms of the object
         MH_B = Mocap.POSTPROCESSING.(ObjStr).transforms.ds; 
+        
         FH_C = Mocap.POSTPROCESSING.(ImpPln).transforms.ds;
 
         %Rewrite the data into mat structures

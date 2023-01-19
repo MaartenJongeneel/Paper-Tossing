@@ -7,8 +7,7 @@ addpath(genpath('readH5')); addpath('data');
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
 %% Load the data
-data = readH5('221005_Box005_RC_Validation.h5'); %Validation of Box005
-% data = readH5('221005_Box006_RC_Validation.h5'); %Validation of Box006
+data = readH5('221021_Archive_011_Box005Box006_Validation.h5');
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -21,7 +20,7 @@ MATLAB.Box005.Traj  = [0.10 0.00 0.45]; %eN eT mu
 MATLAB.Box006.Vel   = [0.40 0.00 0.25]; %eN eT mu 
 MATLAB.Box006.Traj  = [0.25 0.00 0.40]; %eN eT mu
 
-ObjStr = "Box005"; %The object for which you want to do paramID
+ObjStr = "Box006"; %The object for which you want to do paramID
 ImpPln = "ConveyorPart002";
 Param = "Traj";
 %% Loop through the data
@@ -29,6 +28,14 @@ tel = 0;
 fn = fieldnames(data);
 for ii = 1:length(fn)
     if startsWith(fn{ii},'Rec')
+        try
+            Box = data.(fn{ii}).OBJECT.(ObjStr);
+        catch
+            continue;
+        end
+        if contains(data.(fn{ii}).attr.note,"stationary")
+            continue;
+        end
         
 
         %Get the data from the file
@@ -42,6 +49,7 @@ for ii = 1:length(fn)
         if ~isfield(Mocap.POSTPROCESSING,ObjStr)
             continue;
         end
+        %Now we know this recording is used, we can update the teller
         tel = tel+1;
 
         MH_B = Mocap.POSTPROCESSING.(ObjStr).transforms.ds; 
@@ -256,7 +264,7 @@ figure('pos',[500 500 500 300]);
         g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Matlab,0); hold on;     
 
         %Plot new AGX box results
-        g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Algoryx,0);hold on;
+%         g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Algoryx,0);hold on;
 
         %Plot the conveyor C
         spoints = Imp_pln(1:3,1:3,plotnr)*surfacepoints+Imp_pln(1:3,4,plotnr); %Transform the vertices according to position/orientation of the surface

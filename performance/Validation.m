@@ -7,8 +7,9 @@ addpath(genpath('readH5')); addpath('data');
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
 %% Load the data
-% data = readH5('220920_Box005_Validation.h5'); %Validation of Box005
-data = readH5('220920_Box006_Validation.h5'); %Validation of Box006
+% data = readH5('221021_Archive_011_Box005Box006_Validation.h5');
+% data = readH5('230104_Archive_018_Box004_Validation.h5');
+data = readH5('230104_Archive_020_Box007_Validation.h5');
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -16,19 +17,34 @@ color.Algoryx = [77 191 237]/255;
 color.Meas = [128 128 128]/255;
 N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
+MATLAB.Box004.Vel   = [0.40 0.00 0.60]; %eN eT mu
+MATLAB.Box004.Traj  = [0.00 0.00 0.45]; %eN eT mu [0.05 0.00 0.45]; %eN eT mu
 MATLAB.Box005.Vel   = [0.35 0.00 0.45]; %eN eT mu
 MATLAB.Box005.Traj  = [0.00 0.00 0.45]; %eN eT mu [0.10 0.00 0.45]; %eN eT mu
 MATLAB.Box006.Vel   = [0.40 0.00 0.25]; %eN eT mu 
-MATLAB.Box006.Traj  = [0.00 0.40 0.40]; %eN eT mu [0.25 0.00 0.40]; %eN eT mu
+MATLAB.Box006.Traj  = [0.00 0.00 0.40]; %eN eT mu [0.25 0.00 0.40]; %eN eT mu
+MATLAB.Box007.Vel   = [0.60 0.00 0.40];
+MATLAB.Box007.Traj  = [0.00 0.00 0.35]; %eN eT mu [0.45 0.00 0.35];
 
-ObjStr = "Box006"; %The object for which you want to do paramID
-ImpPln = "GroundPlane001";
-Param = "Traj";  %Trajectory based parameters are tested 
+ObjStr = "Box007"; %The object for which you want to do paramID
+ImpPln = "ConveyorPart002"; %"GroundPlane001";
+Param = "Traj";  %Vel or Traj based parameters are tested 
 %% Loop through the data
 tel = 0;
 fn = fieldnames(data);
 for ii = 1:length(fn)
     if startsWith(fn{ii},'Rec')
+        %Get the object info
+        try
+            Box = data.(fn{ii}).OBJECT.(ObjStr);
+        catch
+            continue;
+        end
+        if contains(data.(fn{ii}).attr.note,"moving") || contains(data.(fn{ii}).attr.note,"running")
+            continue;
+        end
+
+        %Now we know this recording is used, we can update the teller
         tel = tel+1;
 
         %Get the data from the file
@@ -72,12 +88,10 @@ for ii = 1:length(fn)
             
         %--------------- Determine the moment of release ----------------%
         %Find the peaks of the position data (height) to find when the box is released from the hand
-            t = find(vecnorm(dMo_B(:,150:end))<0.02); %Find the indices where difference in rel. pos. is small
-            x = diff(t)==1;
-            f = find([false,x]~=[x,false]);
-            g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
-            id_rest = t(f(2*g-1))+149; % First t followed by >=N_pos consecutive numbers
-        if ObjStr == "Box005"
+        if ObjStr == "Box004"
+            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.108,'MinPeakWidth',10);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
+            id_rel = id_rel(end);
+        elseif ObjStr == "Box005"
             [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
             id_rel = id_rel(end);
         elseif ObjStr == "Box006"
@@ -85,14 +99,28 @@ for ii = 1:length(fn)
             [pks,id_rel] = findpeaks(Mo_B(3,100:end,tel),'MinPeakHeight',0.08,'MinPeakWidth',10);
             id_rel = id_rel+99;            
             id_rel = id_rel(1);
+        elseif ObjStr == "Box007"
+            if ii==31
+                [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12,'MinPeakWidth',10);
+            else
+            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.115,'MinPeakWidth',10);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
+            id_rel = id_rel(end);
+            end
         end
 
-%             figure; plot(Mo_B(3,:,tel)); hold on;
-%                 plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-%                 plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-%                 grid on;
-%                 pause
-%                 close all
+        t = find(vecnorm(dMo_B(:,id_rel:end))<0.02); %Find the indices where difference in rel. pos. is small
+        x = diff(t)==1;
+        f = find([false,x]~=[x,false]);
+        g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
+        id_rest = t(f(2*g-1))+id_rel-1; % First t followed by >=N_pos consecutive numbers
+        if isempty(id_rest); id_rest = 700; end
+
+            figure; plot(Mo_B(3,:,tel)); hold on;
+                plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+                plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+                grid on;
+                pause
+                close all
         
         %------------- Determine the relative release-pose --------------%
         Mo_B_rel(:,tel) = Mo_B(:,id_rel,tel);
@@ -136,24 +164,25 @@ writeMuJoCoStates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel)
 %% Plot figure to demonstrate the release and rest determination
 close all
 plotnr = 1;
-figure('rend','painters','pos',[500 500 500 230]);
-ha = tight_subplot(1,1,[.08 .07],[.16 .05],[0.1 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+figure('rend','painters','pos',[500 500 380 200]);
+ha = tight_subplot(1,1,[.08 .07],[.16 .05],[0.13 0.03]);  %[gap_h gap_w] [lower upper] [left right]
 axes(ha(1));
-    plot(((id(plotnr,1)-20):id(plotnr,2)+20)*dt,Mo_B(3,(id(plotnr,1)-20):id(plotnr,2)+20,plotnr)); hold on; 
-    plot(id(plotnr,1)*dt,Mo_B(3,id(plotnr,1),plotnr),'o','markersize',10,'linewidth',2);
-    plot(id(plotnr,2)*dt,Mo_B(3,id(plotnr,2),plotnr),'o','markersize',10,'linewidth',2);
+    plot(((id(plotnr,1)-20):id(plotnr,2)+20),Mo_B(3,(id(plotnr,1)-20):id(plotnr,2)+20,plotnr)); hold on; 
+    plot(id(plotnr,1),Mo_B(3,id(plotnr,1),plotnr),'o','markersize',7,'linewidth',1.4);
+    plot(id(plotnr,2),Mo_B(3,id(plotnr,2),plotnr),'o','markersize',7,'linewidth',1.4);
     grid on;
-    xlim([id(plotnr,1)-20,id(plotnr,2)+20]*dt);
-    xlabel('Time [s]');
+    xlim([id(plotnr,1)-20,id(plotnr,2)+20]);
+    xlabel('Time index $k$ [-]');
     ylabel('$(^M\mathbf{o}_B)_z$ [m]');
-    X = [0.74 0.89];
-    Y = [0.47 0.27];
-    annotation('arrow',X,Y);
-    text(1.5,0.095,'Moment of rest','Fontsize',12);
-    X = [0.36 0.19];
-    Y = [0.81 0.90];
-    annotation('arrow',X,Y);
-    text(1.26,0.138,'Moment of release','Fontsize',12);
+    ylim([0.04 0.16]);
+%     X = [0.74 0.89];
+%     Y = [0.47 0.27];
+%     annotation('arrow',X,Y);
+%     text(1.5,0.095,'Moment of rest','Fontsize',12);
+%     X = [0.36 0.19];
+%     Y = [0.81 0.90];
+%     annotation('arrow',X,Y);
+%     text(1.26,0.138,'Moment of release','Fontsize',12);
     f = gcf;
 %     print(gcf,'Rest-Release.png','-dpng','-r500'); %Uncomment if you want to save this image
     if doSave
@@ -198,16 +227,16 @@ end
 figure('rend','painters','pos',[500 500 150 195]);
     ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
-    for ii =91%1:tel
+    for ii =1:tel
     Ptrans = MH_B_rest(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransM = MH_B_restM(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransA = MH_B_restAGX(:,:,ii)*[Box.vertices.ds';ones(1,8)];
-    x1 = [Ptrans(1,1:4) Ptrans(1,1)];
-    y1 = [Ptrans(2,1:4) Ptrans(2,1)];
-    x2 = [PtransM(1,1:4) PtransM(1,1)];
-    y2 = [PtransM(2,1:4) PtransM(2,1)];
-    x3 = [PtransA(1,1:4) PtransA(1,1)];
-    y3 = [PtransA(2,1:4) PtransA(2,1)];
+    x1 = [Ptrans(1,[1 2 6 5]) Ptrans(1,1)];
+    y1 = [Ptrans(2,[1 2 6 5]) Ptrans(2,1)];
+    x2 = [PtransM(1,[1 2 6 5]) PtransM(1,1)];
+    y2 = [PtransM(2,[1 2 6 5]) PtransM(2,1)];
+    x3 = [PtransA(1,[1 2 6 5]) PtransA(1,1)];
+    y3 = [PtransA(2,[1 2 6 5]) PtransA(2,1)];
     
     fill(x1,y1,color.Meas); %Measured box 
     grid on; hold on;
@@ -224,21 +253,26 @@ figure('rend','painters','pos',[500 500 150 195]);
     end
 
 %% Compute the errors of the rest-orientation and rest-position
+teller = 1;
 for ii =1:tel
-    E_rot_M(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restM(1:3,1:3,ii)));
-    E_rot_A(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX(1:3,1:3,ii)));
-    E_pos_M(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restM(1:3,4,ii))';
-    E_pos_A(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
+    if ObjStr == "Box004" %We need to remove some things here..
+        if ii==42; continue; end;    if ii==28; continue; end
+    end    
+    E_rot_M(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restM(1:3,1:3,ii)));
+    E_rot_A(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX(1:3,1:3,ii)));
+    E_pos_M(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restM(1:3,4,ii))';
+    E_pos_A(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
+    teller = teller+1;
 end
 
 e_pos_M = mean(vecnorm(E_pos_M(:,1:2)'));
 std_pos_M = std(vecnorm(E_pos_M(:,1:2)'));
 e_rot_M = mean(abs(E_rot_M(:,1)));
-std_rot_M = std(vecnorm(E_rot_M(:,1:2)'));
+std_rot_M = std(abs(E_rot_M(:,1)));
 e_pos_A = mean(vecnorm(E_pos_A(:,1:2)'));
 std_pos_A = std(vecnorm(E_pos_A(:,1:2)'));
 e_rot_A = mean(abs(E_rot_A(:,1)));
-std_rot_A = std(vecnorm(E_rot_A(:,1:2)'));
+std_rot_A = std(abs(E_rot_A(:,1)));
 
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface
@@ -249,7 +283,7 @@ FR_C = eye(3);
 Fo_C = zeros(3,1);
 spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
 
-plotnr = 91;
+plotnr = 43;
 %Plot the trajectory of the box
 figure('pos',[500 500 500 300]);
     for ii=id(plotnr,1):5:id(plotnr,2)-1
@@ -264,7 +298,7 @@ figure('pos',[500 500 500 300]);
         if ObjStr == "Box005"
             g3 = plotBox(MH_B_AGX(:,:,round((ii-(id(plotnr,1)-1))*360/125),plotnr),Box,color.Algoryx,0);hold on;
         else
-            g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Algoryx,0);hold on;
+%             g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Algoryx,0);hold on;
         end
 
         %Plot the conveyor C
@@ -289,8 +323,8 @@ figure('pos',[500 500 500 300]);
         ylabel('y [m]');
         zlabel('z [m]');
 %         view(-118,16);
-%         view(-118,27);
-        view(-315,31);
+        view(81,16);
+%         view(-315,31);
 %         view(-90,0);
 %         text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
 %         L1 = legend([g1 g2 ],'Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
@@ -312,25 +346,32 @@ FR_C = eye(3);
 Fo_C = zeros(3,1);
 spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
 
-plotnr = 91;
+plotnr = 1;
 %Plot the trajectory of the box
 figure('pos',[50 50 400 200]);
     ha = tight_subplot(1,1,[.08 .07],[.01 -.3],[0.03 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     %Plot the conveyor C
     table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
-    set(table3,'FaceColor',[56 53 48]/255,'FaceAlpha',1);
+    set(table3,'FaceColor',[220 220 220]/255,'FaceAlpha',1);
     
     %plot Measured box
-    for ii=[373 391 409 427 445 463 481 499 535 571 607]  %id(plotnr,1):18:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1        
-        g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,[194 135 43]/255,0);hold on;   
+    for ii=[id(plotnr,1) 409 427 445 463 481 499 535 id(plotnr,2)]  %id(plotnr,1):18:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1        
+        if ii == id(plotnr,1)
+            g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,[217 83 25]/255,0);hold on;
+        elseif ii == id(plotnr,2)
+            g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,[237 177 32]/255,0);hold on;
+        else
+            g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,[194 135 43]/255,0);hold on;            
+        end
         drawnow
-    end
+    end   
 
     %Other plot options
     axis equal;
-    axis([-0.4 0.6 -1 0.4 -0.05 0.3]);
-    view(-118,27);
+    axis([-0.4 0.6 -0.7 0.4 -0.05 0.3]);
+%     view(-118,27);
+    view(90,2)
     camproj('perspective')
     axis off;
 
