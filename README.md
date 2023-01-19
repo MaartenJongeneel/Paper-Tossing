@@ -57,15 +57,16 @@ Table of content
 - [Contact](#contact)
 
 # Overview
-The code in this repository can be split into two main parts. The first part focusses on parameter identification and the second part focusses on the long-horizon prediction performance. Experiments are executed to obtain datasets for identification and performance analysis on the setup shown below.
+The code in this repository can be split into two main parts. The first part focusses on parameter identification and the second part focusses on the long-horizon prediction performance. Experiments are executed to obtain datasets for identification and performance analysis on the setup shown in Figure 1.
 
 <div align="center">
     <div style = "display: flex; align="center">
-    <img src="figures/GITimg/ExperimentalSetup.jpg" width="50%"/> 
+        <img src="figures/GITimg/ExperimentalSetup.jpg" width="50%"/> 
     </div>
+    <p>Figure 1: Picture of the experimental setup.</p>
 </div> 
 
-In the experiments, different objects are used. Below, the different boxes are shown. Detailed information about the objects can be found on the [Impact-Aware Robotics Database](https://impact-aware-robotics-database.tue.nl/objects).
+In the experiments, different objects are used. In Figure 2, the different boxes are shown. Detailed information about the objects can be found on the [Impact-Aware Robotics Database](https://impact-aware-robotics-database.tue.nl/objects).
 
 <div align="center">
     <div style = "display: flex; align="center">
@@ -76,9 +77,7 @@ In the experiments, different objects are used. Below, the different boxes are s
     </div>
     <p>Figure 2: The different boxes used in experiments. From left to right: Box004, Box005, Box006, and Box007.</p>
 </div>
-<br>
 
-The experiments for parameter identification are stored in Archives. The archive containing box-impact experiments for Box003, Box004, and Box005 can be found [here](https://doi.org/10.4121/17122553). 
 
 <p>&nbsp;</p>
 
@@ -92,7 +91,7 @@ In the models used, the coefficient of friction (COF) and coefficient of restitu
     </div>
     <p>Figure 3: Velocity based cost of Algoryx (left) and MATLAB (right).</p>
 </div>
-<br>
+
 
  The second metric is a *trajectory based* metric, where the loss function is based on a comparison between a measured and simulated trajectory, and the optimum parameters are the ones that minimize this error. The specific code for this part can be found in the [paramID](/paramID/) folder.
 
