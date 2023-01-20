@@ -107,7 +107,7 @@ In Figure 3, one can see the resulting costs for simulations with Algoryx Dynami
  {L_{traj}(\mathbf{x}(k_{rel}:k_{rest})_i, \mu,e_N) = \frac{1}{N}\sum_{k=k_{rel}}^{k_{rest}} \big(\frac{1}{l}\|\mathbf{o}_i(k)-\tilde{\mathbf{o}}_i(k)\|_2 + \|\log\big(\mathbf{R}_i^{-1}(k)\tilde{\mathbf{R}}_i(k)\big)\|_2\big)}
  ```
  
- As a result, Figure 3 shows the costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. Here, the costs do not show a clear minimum, as there appears to be an insensitivity to  $' e_N '$. 
+ As a result, Figure 3 shows the costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. Here, the costs do not show a clear minimum, as there appears to be an insensitivity to  $e_N$. 
  
  <div align="center">
     <div style = "display: flex; align="center">
@@ -120,6 +120,16 @@ In Figure 3, one can see the resulting costs for simulations with Algoryx Dynami
  The optimum paramters are then used in simulation to evaluate the prediction performance. The code for parameter identification can be found in the [paramID](/paramID/) folder. Details about the approach can be found in the paper.
 
 ## Part 2: Prediction performance
+With the optimum paramters at hand, we can evaluate the prediction performance of the different simulators. 
+
+ <div align="center">
+    <div style = "display: flex; align="center">
+        <img src="figures/GITimg/MomentOfRelease.jpg" alt="drawing" width=25%/>
+        <img src="figures/GITimg/Measured_box_trajectory.jpg" alt="drawing" width=25%/>
+    </div>
+    <p>Figure 4: Defining the moment of release and the moment of rest. Height of the object (left) and 3D plotted trajectory (right).</p>
+</div>
+
 
 # Installation
 The code of this repository is all written in MATLAB and can directly be pulled from this repository. The datasets as written under [Requirements](#requirements) should be downloaded and placed in the [data](/data/) folder.
