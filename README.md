@@ -107,7 +107,7 @@ In Figure 3, one can see the resulting costs for simulations with Algoryx Dynami
  {L_{traj}(\mathbf{x}(k_{rel}:k_{rest})_i, \mu,e_N) = \frac{1}{N}\sum_{k=k_{rel}}^{k_{rest}} \big(\frac{1}{l}\|\mathbf{o}_i(k)-\tilde{\mathbf{o}}_i(k)\|_2 + \|\log\big(\mathbf{R}_i^{-1}(k)\tilde{\mathbf{R}}_i(k)\big)\|_2\big)}
  ```
  
- As a result, Figure 3 shows the costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. Here, the costs do not show a clear minimum, as there appears to be an insensitivity to  ```math e_N``` . 
+ As a result, Figure 3 shows the costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. Here, the costs do not show a clear minimum, as there appears to be an insensitivity to  $'e_N '$. 
  
  <div align="center">
     <div style = "display: flex; align="center">
