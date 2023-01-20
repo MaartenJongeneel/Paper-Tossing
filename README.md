@@ -134,7 +134,7 @@ With the optimum paramters at hand, we can evaluate the prediction performance o
  <div align="center">
     <div style = "display: flex; align="center">
         <img src="figures/GITimg/MomentOfRelease.jpg" alt="drawing" width=25%/>
-        <img src="figures/GITimg/Measured_box_trajectory.jpg" alt="drawing" width=25%/>
+        <img src="figures/GITimg/Measured_box_trajectory.jpg" alt="drawing" width=45%/>
     </div>
     <p>Figure 4: Defining the moment of release and the moment of rest. Height of the object (left) and 3D plotted trajectory (right).</p>
 </div>
@@ -143,7 +143,7 @@ We use the state of the object at the moment of release, together with the optim
 
  <div align="center">
     <div style = "display: flex; align="center">
-        <img src="figures/GITimg/RestPoses.jpg" alt="drawing" width=100%/>
+        <img src="figures/GITimg/RestPoses.jpg" alt="drawing" width=80%/>
     </div>
     <p>Figure 5: Resulting rest-poses of three random selected experiments with Box005 and Box006. Details in the paper.</p>
 </div>
