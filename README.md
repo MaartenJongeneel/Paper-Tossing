@@ -148,6 +148,17 @@ We use the state of the object at the moment of release, together with the optim
     <p>Figure 5: Resulting rest-poses of three random selected experiments with Box005 and Box006. Details in the paper.</p>
 </div>
 
+The predictability performance of the simulators is measured
+in terms of the rest-pose error. These errors show,
+considering the parameters obtained via the trajectory based
+cost function, a position error in the order of 5-10 cm, and a
+orientation error in the order of 8-16 degrees over a tossing
+trajectory of about 1.2 meters, with boxes whose maximum
+dimension is about 20cm. These errors are, considering the
+application at hand, rather small, and suggest that nonsmooth
+dynamics models can indeed be used to predict the rest-pose of
+box-tosses in logistics.
+
 
 # Installation
 The code of this repository is all written in MATLAB and can directly be pulled from this repository. The datasets as written under [Requirements](#requirements) should be downloaded and placed in the [data](/data/) folder.
