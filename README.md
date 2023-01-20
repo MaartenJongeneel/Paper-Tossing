@@ -107,7 +107,7 @@ In Figure 3, one can see the resulting costs for simulations with Algoryx Dynami
  {L_{traj}(\mathbf{x}(k_{rel}:k_{rest})_i, \mu,e_N) = \frac{1}{N}\sum_{k=k_{rel}}^{k_{rest}} \big(\frac{1}{l}\|\mathbf{o}_i(k)-\tilde{\mathbf{o}}_i(k)\|_2 + \|\log\big(\mathbf{R}_i^{-1}(k)\tilde{\mathbf{R}}_i(k)\big)\|_2\big)}
  ```
  
- As a result, Figure 3 shows the costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. Here, the costs do not show a clear minimum, as there appears to be an insensitivity to  $e_N$. 
+ As a result, Figure 3 shows the costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. Here, the costs do not show a clear minimum, as there appears to be an insensitivity to  $e_N$. The optimum parameters for different boxes via velocity based and trajectory based parameter identification are shown in Table 1.
  
  <div align="center">
     <div style = "display: flex; align="center">
@@ -116,11 +116,20 @@ In Figure 3, one can see the resulting costs for simulations with Algoryx Dynami
     </div>
     <p>Figure 3: Trajectory based cost of Algoryx (left) and MATLAB (right).</p>
 </div>
+
+<div align="center">
+    <div style = "display: flex; align="center">
+        <img src="figures/GITimg/TableResParams.jpg" alt="drawing" width=50%/>
+    </div>
+    <p>Table 1: Resulting parameters for different boxes via velocity based and trajectory based parameter identification.</p>
+</div>
  
  The optimum paramters are then used in simulation to evaluate the prediction performance. The code for parameter identification can be found in the [paramID](/paramID/) folder. Details about the approach can be found in the paper.
 
+
+
 ## Part 2: Prediction performance
-With the optimum paramters at hand, we can evaluate the prediction performance of the different simulators. 
+With the optimum paramters at hand, we can evaluate the prediction performance of the different simulators. To do so, for each experiment, we define a moment of release of the box and the moment of rest. See Figure 4 for an indication. 
 
  <div align="center">
     <div style = "display: flex; align="center">
@@ -130,12 +139,18 @@ With the optimum paramters at hand, we can evaluate the prediction performance o
     <p>Figure 4: Defining the moment of release and the moment of rest. Height of the object (left) and 3D plotted trajectory (right).</p>
 </div>
 
+We use the state of the object at the moment of release, together with the optimum paramters $\mu$ and $e_N$ as input to the simulations and simulate until the moment of rest. Then, we compare the simulated rest-pose with the measured rest-pose of the object. In Figure 5, we have plotted the resulting rest-poses for the velocity based parameters on Box005 (a), (b), (c),  results of velocity-based parameters on Box006 (d),(e),(f), results of trajectory based parameters on Box005 (g),(h),(i), results of trajectory-based parameters on Box006 (j),(k),(l).
+
+ <div align="center">
+    <div style = "display: flex; align="center">
+        <img src="figures/GITimg/RestPoses.jpg" alt="drawing" width=100%/>
+    </div>
+    <p>Figure 5: Resulting rest-poses of three random selected experiments with Box005 and Box006. Details in the paper.</p>
+</div>
+
 
 # Installation
 The code of this repository is all written in MATLAB and can directly be pulled from this repository. The datasets as written under [Requirements](#requirements) should be downloaded and placed in the [data](/data/) folder.
-
-# Approach
-
 
 
 # Contact
