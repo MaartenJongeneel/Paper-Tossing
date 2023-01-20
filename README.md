@@ -86,7 +86,9 @@ In the experiments, different objects are used. In Figure 2, the different boxes
 ## Part 1: Parameter identification
 In the models used, the coefficient of friction (COF) and coefficient of restitution (COR) need to be identified, as they differ per object/environment combination. There are two metrics that are used for the identification of the parameters. The first metric is a *velocity based* metric, where the loss function is based on a comparison between predicted and measured post-impact velocity, given a pre-impact object state. This means we write the loss as 
 
-$$L_{vel}(i;\mu,e_N) = \bigg\|\mathbf{W} \left(\mathbf{v}^{+} -	\tilde{\mathbf{v}}^{+}(e_N,\mu)\right)\bigg\|_2.$$
+ ```math
+ L_{vel}(i;\mu,e_N) = \bigg\|\mathbf{W} \left(\mathbf{v}^{+} -	\tilde{\mathbf{v}}^{+}(e_N,\mu)\right)\bigg\|_2.
+ ```
 
 In Figure 3, one can see the resulting costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. The cost functions show a clear minimum. 
 
@@ -105,7 +107,7 @@ In Figure 3, one can see the resulting costs for simulations with Algoryx Dynami
  {L_{traj}(\mathbf{x}(k_{rel}:k_{rest})_i, \mu,e_N) = \frac{1}{N}\sum_{k=k_{rel}}^{k_{rest}} \big(\frac{1}{l}\|\mathbf{o}_i(k)-\tilde{\mathbf{o}}_i(k)\|_2 + \|\log\big(\mathbf{R}_i^{-1}(k)\tilde{\mathbf{R}}_i(k)\big)\|_2\big)}
  ```
  
- As a result, Figure 3 shows the costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. Here, the costs do not show a clear minimum, as there appears to be an insensitivity to $'e_N'$. 
+ As a result, Figure 3 shows the costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. Here, the costs do not show a clear minimum, as there appears to be an insensitivity to ```math e_N ```. 
  
  <div align="center">
     <div style = "display: flex; align="center">
