@@ -39,12 +39,14 @@ The following datasets are required to run the code. They can be downloaded via 
  - [Archive_009_Box005_Repeatability.h5](https://doi.org/10.4121/21387606) : Archive used for trajectory based parameter identification of Box005
  - [Archive_011_Box005Box006_Validation](https://doi.org/10.4121/21399657) : Archive containing experiments for validation of tosses with Box005 and Box006 on stationary and running conveyor
 
+ The archives related to other boxes (e.g., Box004, Box007) can be found at the collection: [Data underlying the publication: Validating Rigid-Body Dynamics Simulators on Real-World Data for Robotic Tossing Applications](https://doi.org/10.4121/c.6278310). 
+
 
 
 Introduction
 ============
 
-The content of this repository is associated to the paper "Parameter Identification and Validation of Nonsmooth Impact Models with Friction". The objective for this project is to empirically evaluate the prediction performance of commonly used impact models. To this end, first a parameter identification approach is used to identify (from experimental data) the coefficients of friction and restitution of the objects that are used in experiments. Second, once these parameters are known, the prediction capabilities of these models are tested on a different experimental dataset. 
+The content of this repository is associated to the paper "Parameter Identification and Validation of Nonsmooth Impact Models with Friction". The objective for this project is to empirically evaluate the prediction performance of commonly used nonsmooth rigid-body dynamics simulators. To this end, first a parameter identification approach is used to identify (from experimental data) the coefficients of friction and restitution of the objects that are used in experiments. Second, once these parameters are known, the prediction capabilities of these models are tested on different experimental datasets. 
 
 This project is part of the European project [I.AM.](www.i-am-project.eu) on Impact Aware Manipulation under the scenario of TOSS. 
 
@@ -82,7 +84,11 @@ In the experiments, different objects are used. In Figure 2, the different boxes
 <p>&nbsp;</p>
 
 ## Part 1: Parameter identification
-In the models used, the coefficient of friction (COF) and coefficient of restitution (COR) need to be identified, as they differ per object/environment combination. There are two metrics that are used for the identification of the parameters. The first metric is a *velocity based* metric, where the loss function is based on a comparison between predicted and measured post-impact velocity, given a pre-impact object state.
+In the models used, the coefficient of friction (COF) and coefficient of restitution (COR) need to be identified, as they differ per object/environment combination. There are two metrics that are used for the identification of the parameters. The first metric is a *velocity based* metric, where the loss function is based on a comparison between predicted and measured post-impact velocity, given a pre-impact object state. This means we write the loss as 
+
+$L_{vel}(i;\mu,e_N) = \bigg\|\mathbf{W} \left(\mathbf{v}^{+} -	\tilde{\mathbf{v}}^{+}(e_N,\mu)\right)\bigg\|_2.$
+
+In Figure 3, one can see the resulting costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. The cost functions show a clear minimum. 
 
 <div align="center">
     <div style = "display: flex; align="center">
@@ -93,7 +99,21 @@ In the models used, the coefficient of friction (COF) and coefficient of restitu
 </div>
 
 
- The second metric is a *trajectory based* metric, where the loss function is based on a comparison between a measured and simulated trajectory, and the optimum parameters are the ones that minimize this error. The specific code for this part can be found in the [paramID](/paramID/) folder.
+ The second metric is a *trajectory based* metric, where the loss function is based on a comparison between a measured and simulated trajectory, and the optimum parameters are the ones that minimize this error. This means we write the loss as
+
+ $ L_{traj}(\mathbf{x}(k_{rel}:k_{rest})_i, \mu,e_N) = \frac{1}{N}\sum_{k=k_{rel}}^{k_{rest}} \big(\frac{1}{l}\|\mathbf{o}_i(k)-\tilde{\mathbf{o}}_i(k)\|_2 + \|\log\big(\mathbf{R}_i^{-1}(k)\tilde{\mathbf{R}}_i(k)\big)\|_2\big),$
+ 
+ As a result, Figure 3 shows the costs for simulations with Algoryx Dynamics (left) and MATLAB (right), for experiments with Box006. Here, the costs do not show a clear minimum, as there appears to be an insensitivity to $e_N$. 
+ 
+ <div align="center">
+    <div style = "display: flex; align="center">
+        <img src="figures/GITimg/Traj_Based_CostAlgoryx.jpg" alt="drawing" width=25%/>
+        <img src="figures/GITimg/Traj_Based_CostMatlab.jpg" alt="drawing" width=25%/>
+    </div>
+    <p>Figure 3: Trajectory based cost of Algoryx (left) and MATLAB (right).</p>
+</div>
+ 
+ The optimum paramters are then used in simulation to evaluate the prediction performance. The code for parameter identification can be found in the [paramID](/paramID/) folder. Details about the approach can be found in the paper.
 
 ## Part 2: Prediction performance
 
@@ -107,7 +127,7 @@ The code of this repository is all written in MATLAB and can directly be pulled 
 # Contact
 In case you have questions or if you encountered an error, please contact us through the "Issues" functionality on GIT. Alternatively you can send an email to [Maarten Jongeneel](mailto:m.j.jongeneel@tue.nl).
 
-# TODO
+<!-- # TODO
 - [ ] Write a proper README.md
 - [ ] Update `paramID/getImpactData.m`
     - [ ] Make the object you want to use for paramID as input, get rid of hardcoded stuff
@@ -120,6 +140,6 @@ In case you have questions or if you encountered an error, please contact us thr
     - [ ] Make simulations in AGX optional (s.t. one can run also only Matlab)
     - [ ] Create options for MuJoCo simulation and validation scripts
     - [ ] Write proper script to evaluate rest-pose on the conveyor of certain (input) object (e.g., box5)
-    - [ ] Write proper script to evaluate pick-up on the (input) object (e.g., box5)
+    - [ ] Write proper script to evaluate pick-up on the (input) object (e.g., box5) -->
 
 
