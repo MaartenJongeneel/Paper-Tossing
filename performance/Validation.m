@@ -227,16 +227,16 @@ end
 figure('rend','painters','pos',[500 500 150 195]);
     ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
-    for ii =1:tel
+    for ii =[1 12 25]; %1:tel
     Ptrans = MH_B_rest(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransM = MH_B_restM(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransA = MH_B_restAGX(:,:,ii)*[Box.vertices.ds';ones(1,8)];
-    x1 = [Ptrans(1,[1 2 6 5]) Ptrans(1,1)];
-    y1 = [Ptrans(2,[1 2 6 5]) Ptrans(2,1)];
-    x2 = [PtransM(1,[1 2 6 5]) PtransM(1,1)];
-    y2 = [PtransM(2,[1 2 6 5]) PtransM(2,1)];
-    x3 = [PtransA(1,[1 2 6 5]) PtransA(1,1)];
-    y3 = [PtransA(2,[1 2 6 5]) PtransA(2,1)];
+    x1 = [Ptrans(1,1:4) Ptrans(1,1)];
+    y1 = [Ptrans(2,1:4) Ptrans(2,1)];
+    x2 = [PtransM(1,1:4) PtransM(1,1)];
+    y2 = [PtransM(2,1:4) PtransM(2,1)];
+    x3 = [PtransA(1,1:4) PtransA(1,1)];
+    y3 = [PtransA(2,1:4) PtransA(2,1)];
     
     fill(x1,y1,color.Meas); %Measured box 
     grid on; hold on;

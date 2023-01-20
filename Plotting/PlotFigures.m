@@ -3,8 +3,8 @@ close all; set(groot,'defaulttextinterpreter','latex'); set(groot,'defaultAxesTi
 %Create a plot grid
 sizex = 380;
 sizey = 250;
-px = (0:7)*(sizex+10)+10;
-py = (0:4)*(sizey+90)+45;
+px = (0:11)*(190+10)+10;
+py = (0:6)*(195+90)+45;
 for  ii = 1:length(px)
     for jj = 1:length(py)
         pp{jj,ii} = [px(ii) py(jj)];
@@ -12,62 +12,20 @@ for  ii = 1:length(px)
 end 
 
 %%
-
 doSave = false;
 
-lowlim = 0.05;
-uplim = 0.8;
-
-if evalAlgoryx && evalMatlab
-    good = (MATLABmu_opt< uplim) & (MATLABmu_opt > lowlim) & (MATLABeN_opt < uplim) & (MATLABeN_opt > lowlim)...
-    & (AGXmu_opt< uplim) & (AGXmu_opt > lowlim) & (AGXeN_opt < uplim) & (AGXeN_opt > lowlim);
-elseif evalAlgoryx && ~evalMatlab
-    good = (AGXmu_opt< uplim) & (AGXmu_opt > lowlim) & (AGXeN_opt < uplim) & (AGXeN_opt > lowlim);
-elseif ~evalAlgoryx && evalMatlab
-    good = (MATLABmu_opt< uplim) & (MATLABmu_opt > lowlim) & (MATLABeN_opt < uplim) & (MATLABeN_opt > lowlim);
-end
-if evalAlgoryx
-    amu = AGXmu_opt(good);
-    aeN = AGXeN_opt(good);
-    awi = AGXwi(good);   %Take the good measurements
-    awi = 1./awi;        %Flip the weights
-    awi = awi./sum(awi); %Normalize the weights
-    SUMAGX = (1/length(E_AGX(1,1,1,good)))*sum(E_AGX(:,:,:,good),4);
-end
-if evalMatlab
-    mmu = MATLABmu_opt(good);
-    meN = MATLABeN_opt(good);
-    mwi = MATLABwi(good); %Take the good measurements
-    mwi = 1./mwi;         %Flip the weights
-    mwi = mwi./sum(mwi);  %Normalize the weights
-    SUMMATLAB = (1/length(E_MATLAB(1,1,1,good)))*sum(E_MATLAB(:,:,:,good),4);
-end
-
-clear meanM_mu stdM_mu meanM_eN stdM_eN meanA_mu stdA_mu meanA_eN stdA_eN
-
-%Randomly sample from data, without replacement:
-[~,idx] = datasample(mmu,length(mmu),'Replace',false);
-
-%Select the indices that indicate the time of pre- and post-impact velocity
-is = 1; %is = 136; %Box006
-
-Ia = impacts.indx(imp_sel(is),2) -5;
-Ib = impacts.indx(imp_sel(is),3);
-Ic = impacts.indx(imp_sel(is),4);
-Id = impacts.indx(imp_sel(is),2) +5;
-
-dCp_meas   = cell2mat(impacts.dCo_p(imp_sel(is),:));
-BV_CB      = impacts.BV_CB(imp_sel(is),:);
-BV_CBef    = impacts.BV_CBef(imp_sel(is),:);
-BCV_CB     = cell2mat(impacts.BCV_CB(imp_sel(is),:));
-BCV_CBaf   = cell2mat(impacts.BCV_CBaf(imp_sel(is),:));
-BCV_CBef   = cell2mat(impacts.BCV_CBef(imp_sel(is),:));
-V_impact   = impacts.indx(imp_sel(is),1);
-
-%%
-if evalMatlab  
-    %Plot the combined cost of Matlab
-    figure('rend','painters','pos',[pp{3,4} 0.45*sizex 0.6*sizey]);
+color.Green = [0.4660 0.6740 0.1880];
+color.Blue = [0 0.4470 0.7410];
+color.Red = [0.8500 0.3250 0.0980]; 
+color.GreenLight = [0.4660 0.6740 0.1880 0.5];
+color.BlueLight = [0 0.4470 0.7410 0.5];
+color.RedLight = [0.8500 0.3250 0.0980 0.5];
+color.Matlab = [85 122 149]/255;%[237 176 33]/255;
+color.Algoryx = [220 217 208]/255;%[77 191 237]/255;
+color.Meas = [128 128 128]/255;
+ 
+%% Plot the Vel based combined cost of Matlab
+figure('rend','painters','pos',[pp{5,1} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 -0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMMATLAB); axis square;
@@ -76,13 +34,11 @@ if evalMatlab
     xlim([0 1]);
     ylim([0 1]);
     view(-40,15);
-    
     if doSave;fig = gcf;fig.PaperPositionMode = 'auto';fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/CostMatlab.pdf'),'-dpdf','-vector'); end
-end
-if evalAlgoryx    
-    % Plot the combined cost of AGX
-    figure('rend','painters','pos',[pp{2,4} 0.45*sizex 0.6*sizey]);
+    
+%% Plot the Vel based combined cost of AGX
+figure('rend','painters','pos',[pp{5,2} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 -0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMAGX); axis square;
@@ -94,12 +50,9 @@ if evalAlgoryx
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/CostAlgoryx.pdf'),'-dpdf','-vector'); end
     
-end
     
-
-    %% Combined plot
-    close all;
-    figure('rend','painters','pos',[pp{2,1} sizex 1.7*sizey]);
+%% Plot the hybrid velocities from measurements around the impact time
+figure('rend','painters','pos',[pp{4,7} sizex 1.7*sizey]);
     ha = tight_subplot(2,1,[.09 .05],[.08 .07],[0.12 0.06]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     hm = plot(Ia:Id,BCV_CB(1:3,:),'linewidth',1.2); grid on; hold on;                           %Measurement
@@ -142,18 +95,13 @@ end
     xline(Ia+5,'-.')
     xline(Ic,'-.')
     xline(Id,'-.')
-   
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'figures/MeasuredVelocities.pdf','-dpdf','-vector')
-    end
+    
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'figures/MeasuredVelocities.pdf','-dpdf','-vector'); end
 
 
-% Combined plot Matlab results
-    figure('rend','painters','pos',[pp{2,2} sizex 1.7*sizey]);
+%% Plot the hybrid velocities from MATLAB around the impact time
+    figure('rend','painters','pos',[pp{4,9} sizex 1.7*sizey]);
     ha = tight_subplot(2,1,[.09 .05],[.08 .07],[0.12 0.06]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     hm = plot(Ia:Id,BCV_CB(1:3,:),'linewidth',1); grid on; hold on;                           %Measurement
@@ -186,8 +134,8 @@ end
     
     
     axes(ha(2));
-    hm = plot(Ia:Id,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                          %Measurement
-    hM = plot(Ia:Id,BCV_MB_M(4:6,1:11,optMATLAB_idx),'linewidth',1,'LineStyle','--');           %MATLAB data
+    hm = plot(Ia:Id,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                       %Measurement
+    hM = plot(Ia:Id,BCV_MB_M(4:6,1:11,optMATLAB_idx),'linewidth',1,'LineStyle','--');     %MATLAB data
     set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
     set(hM,{'color'},{color.Red; color.Green; color.Blue})
     plot(Ia:Ib,BCV_CBaf(4:6,1:indx_b)','--','color','k','LineWidth',1.2);
@@ -202,20 +150,15 @@ end
     ylabel('Angular velocity $^{B[C]}$\boldmath${\omega}_{C,B}$ [m/s]');
     ha(2).XTick = Ia:Id;
     
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'figures/VelResMATLAB.pdf','-dpdf','-vector')
-    end
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'figures/VelResMATLAB.pdf','-dpdf','-vector'); end
 
-% Combined plot AGX Results
-    figure('rend','painters','pos',[pp{2,3} sizex 1.7*sizey]);
+%% Plot the hybrid velocities from Algoryx around the impact time
+figure('rend','painters','pos',[pp{4,11} sizex 1.7*sizey]);
     ha = tight_subplot(2,1,[.09 .05],[.08 .07],[0.12 0.06]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
-    hm = plot(Ia:Id,BCV_CB(1:3,:),'linewidth',1); grid on; hold on;                           %Measurement
-    hA = plot(Ia:Id,BCV_MB_AGX(1:3,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');            %MATLAB data
+    hm = plot(Ia:Id,BCV_CB(1:3,:),'linewidth',1); grid on; hold on;                      %Measurement
+    hA = plot(Ia:Id,BCV_MB_AGX(1:3,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');   %Algoryx data
     set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
     set(hA,{'color'},{color.Red; color.Green; color.Blue})
     p = plot(Ia:Ib,BCV_CBaf(1:3,1:indx_b)','--','color','k','LineWidth',1.2);
@@ -243,8 +186,8 @@ end
     text(Id-0.7,max(max(BCV_CB(1:3,:)))+0.4,'$k_{im}+5$','FontSize',9);
     
     axes(ha(2));
-    hm = plot(Ia:Id,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                          %Measurement
-    hA = plot(Ia:Id,BCV_MB_AGX(4:6,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');           %MATLAB data
+    hm = plot(Ia:Id,BCV_CB(4:6,:),'linewidth',1); grid on; hold on;                      %Measurement
+    hA = plot(Ia:Id,BCV_MB_AGX(4:6,(1:11),optAGX_idx),'linewidth',1,'LineStyle','--');   %Algoryx data
     set(hm,{'color'},{color.RedLight; color.GreenLight; color.BlueLight})
     set(hA,{'color'},{color.Red; color.Green; color.Blue})
     plot(Ia:Ib,BCV_CBaf(4:6,1:indx_b)','--','color','k','LineWidth',1.2);
@@ -259,16 +202,12 @@ end
     xline(Ic,'-.')
     xline(Id,'-.')
    
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'figures/VelResAGX.pdf','-dpdf','-vector')
-    end
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'figures/VelResAGX.pdf','-dpdf','-vector'); end
 
-%% Impact detection
-figure('rend','painters','pos',[pp{1,1} 380 200]);
+
+%% Impact selection
+figure('rend','painters','pos',[pp{3,11} sizex 200]);
     ha = tight_subplot(1,1,[.08 .07],[.17 .03],[0.11 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     vertex=find(plocs==ii_imp);
@@ -279,18 +218,12 @@ figure('rend','painters','pos',[pp{1,1} 380 200]);
     axis([240 450 -0.02 0.3]);
     xlabel('Time index $k$ [-]');
     ylabel('$(^C\mathbf{p}_i(k))_z$ [m]')
-%             L1 = legend([p2 p3 p1(1)],'Trajectory of $(^C\mathbf{p}_1)_z$','Found impact time $t_{imp}$ = 275','Trajectory of $(^C\mathbf{p}_{i\neq1})_z$','location','northeast');
-    if doSave
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        fig_pos = fig.PaperPosition;
-        fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,'figures/impact_selection.pdf','-dpdf','-vector')
-    end
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,'figures/impact_selection.pdf','-dpdf','-vector'); end
 
-%% Trajectory based costs
-%Plot the cost of MATLAB simulation
-figure('rend','painters','pos',[pp{3,5} 0.45*sizex 0.6*sizey]);
+
+%% Plot the Traj based cost of MATLAB simulation
+figure('rend','painters','pos',[pp{5,3} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMMATLABtraj); 
@@ -303,13 +236,11 @@ figure('rend','painters','pos',[pp{3,5} 0.45*sizex 0.6*sizey]);
     xlabel('$e_N$');
     ylabel('$\mu$');
     zlabel('$\frac{1}{M}\sum_{i=1}^ML_{traj}(i;\mu,e_N)$');
-    
-
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
     print(fig,append('figures/Traj_Based_Cost_Matlab'),'-dpdf','-vector'); end
 
-%Plot the cost of Algoryx simulation
-figure('rend','painters','pos',[pp{2,5} 0.45*sizex 0.6*sizey]);
+%% Plot the Traj based cost of Algoryx simulation
+figure('rend','painters','pos',[pp{5,4} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMAGXtraj); 
@@ -322,11 +253,10 @@ figure('rend','painters','pos',[pp{2,5} 0.45*sizex 0.6*sizey]);
     xlabel('$e_N$');
     ylabel('$\mu$');
     zlabel('$\frac{1}{M}\sum_{i=1}^ML_{traj}(i;\mu,e_N)$');
-
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
     print(fig,append('figures/Traj_Based_Cost_Algoryx'),'-dpdf','-vector'); end
 
-%% Plot measured trajectory for paper figure
+%% Plot measured trajectory in 3D for paper figure
 % Plotting options For plotting the contact surface
 ws    = 3.5;  %Width of the contact surface             [m]
 ls    = 3.5;  %Length of the contact surface           [m]
@@ -334,10 +264,11 @@ surfacepoints = [0.5*ws -0.5*ws -0.5*ws 0.5*ws 0.5*ws; -0.5*ls -0.5*ls 0.5*ls 0.
 FR_C = eye(3); 
 Fo_C = zeros(3,1);
 spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
+% 
+% plotnr = 1;
 
-plotnr = 1;
 %Plot the trajectory of the box
-figure('pos',[pp{1,2} 400 200]);
+figure('pos',[pp{3,9} sizex 200]);
     ha = tight_subplot(1,1,[.08 .07],[.01 -.3],[0.03 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     %Plot the conveyor C
@@ -347,11 +278,11 @@ figure('pos',[pp{1,2} 400 200]);
     %plot Measured box
     for ii=[id(plotnr,1) 409 427 445 463 481 499 535 id(plotnr,2)]  %id(plotnr,1):18:id(plotnr,1)+(id(plotnr,2)-id(plotnr,1))-1        
         if ii == id(plotnr,1)
-            g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,[217 83 25]/255,0);hold on;
+            g1 = plotBox(MH_Bm(:,:,ii,plotnr),Boxes.Box006,[217 83 25]/255,0);hold on;
         elseif ii == id(plotnr,2)
-            g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,[237 177 32]/255,0);hold on;
+            g1 = plotBox(MH_Bm(:,:,ii,plotnr),Boxes.Box006,[237 177 32]/255,0);hold on;
         else
-            g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,[194 135 43]/255,0);hold on;            
+            g1 = plotBox(MH_Bm(:,:,ii,plotnr),Boxes.Box006,[194 135 43]/255,0);hold on;            
         end
         drawnow
     end   
@@ -363,14 +294,11 @@ figure('pos',[pp{1,2} 400 200]);
     view(90,2)
     camproj('perspective')
     axis off;
+    if doSave; f = gcf; exportgraphics(f,'figures/Measured_box_trajectory_2.png','Resolution',1500); end
 
-    if doSave
-        f = gcf;
-        exportgraphics(f,'figures/Measured_box_trajectory_2.png','Resolution',1500);
-    end
-%% Plot figure to demonstrate the release and rest determination
-plotnr = 1;
-figure('rend','painters','pos',[pp{1,3} 380 200]);
+%% Plot moment of release and moment of rest
+% plotnr = 1;
+figure('rend','painters','pos',[pp{3,7} 380 200]);
 ha = tight_subplot(1,1,[.08 .07],[.17 .01],[0.13 0.03]);  %[gap_h gap_w] [lower upper] [left right]
 axes(ha(1));
     plot(((id(plotnr,1)-20):id(plotnr,2)+20),Mo_B(3,(id(plotnr,1)-20):id(plotnr,2)+20,plotnr)); hold on; 
@@ -398,3 +326,133 @@ axes(ha(1));
         fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,'figures/moment_of_release.pdf','-dpdf','-vector')
     end
+
+%% Plot the results of the single Matlab + AGX simulation in smaller figure
+for jj = 1:12
+    if jj > 9
+        ObjStr = 'Box006';
+        Method = 'Traj';
+    elseif jj > 6
+        ObjStr = 'Box005';
+        Method = 'Traj';
+    elseif jj > 3
+        ObjStr = 'Box006';
+        Method = 'Vel';
+    else
+        ObjStr = 'Box005';
+        Method = 'Vel';
+    end
+
+    plotidx = [1 12 25 1 6 91 1 12 25 1 6 91];
+
+    figure('rend','painters','pos',[pp{Val.idx(jj,1),Val.idx(jj,2)} 150 190]);
+    ha = tight_subplot(1,1,[.08 .07],[.16 .005],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+
+    Ptrans = Val.(append(ObjStr,Method)).MH_B_rest(:,:,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
+    PtransM = Val.(append(ObjStr,Method)).MH_B_restM(:,:,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
+    PtransA = Val.(append(ObjStr,Method)).MH_B_restAGX(:,:,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
+    x1 = [Ptrans(1,1:4) Ptrans(1,1)];
+    y1 = [Ptrans(2,1:4) Ptrans(2,1)];
+    x2 = [PtransM(1,1:4) PtransM(1,1)];
+    y2 = [PtransM(2,1:4) PtransM(2,1)];
+    x3 = [PtransA(1,1:4) PtransA(1,1)];
+    y3 = [PtransA(2,1:4) PtransA(2,1)];
+
+    fill(x1,y1,color.Meas); %Measured box
+    grid on; hold on;
+    fill(x2,y2,color.Matlab);      %Matlab box
+    fill(x3,y3,color.Algoryx); %AGX box
+    xlabel('$(^M\mathbf{o}_B)_x$');
+    ylabel('$(^M\mathbf{o}_B)_y$');
+    axis equal
+    axis([-0.1 0.6 -0.1 0.9]);
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/RestPose/',ObjStr,'_',Method,'/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector'); end
+    hold off;
+end
+%% Plot results of the multiple Matlab and AGX simulations (varying parameters)
+for jj = 1:24
+    if jj > 21
+        sim = "Matlab";
+    elseif jj > 18
+        ObjStr = 'Box005';
+        Param = 'mu';
+        sim = 'Algoryx';
+    elseif jj > 15
+        sim = "Matlab";
+    elseif jj > 12
+        ObjStr = 'Box005';
+        Param = 'eN';
+        sim = 'Algoryx';
+    elseif jj > 9
+        sim = "Matlab";
+    elseif jj > 6
+        ObjStr = 'Box006';
+        Param = 'mu';
+        sim = 'Algoryx';
+    elseif jj > 3
+        sim = "Matlab";
+    else
+        ObjStr = 'Box006';
+        Param = 'eN';
+        sim = 'Algoryx';
+    end
+
+    plotidx = [1 6 58 1 6 58 1 6 58 1 6 58 1 12 25 1 12 25 1 12 25 1 12 25];
+
+    figure('rend','painters','pos',[pp{Sens.idx(jj,1),Sens.idx(jj,2)} 150 190]);
+    ha = tight_subplot(1,1,[.08 .07],[.16 .005],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    Ptrans = Sens.(append(ObjStr,Param)).MH_B_rest(:,:,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
+    if sim == "Matlab"
+        PtransS = Sens.(append(ObjStr,Param)).MH_B_restM_P(:,:,6,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)]; %6th is the mean
+    else
+        PtransS = Sens.(append(ObjStr,Param)).MH_B_restAGX_P(:,:,6,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)]; %6th is the mean
+    end
+    x1 = [Ptrans(1,1:4) Ptrans(1,1)];
+    y1 = [Ptrans(2,1:4) Ptrans(2,1)];
+    x2 = [PtransS(1,1:4) PtransS(1,1)];
+    y2 = [PtransS(2,1:4) PtransS(2,1)];
+
+    %Plot result from the experiments
+    fill(x1,y1,color.Meas); %Measured box
+    axis equal; axis([-0.3 1 -0.7 0.3]); grid on; hold on
+    if sim == "Matlab"
+        fill(x2,y2,color.Matlab);      %Matlab box
+    else
+        fill(x2,y2,color.Algoryx);      %Algoryx box
+    end
+    
+
+    %Plot the result from the sampled simulations
+    for ib = 1:11
+        if sim == "Matlab"
+            PtransS(:,:,ib) = Sens.(append(ObjStr,Param)).MH_B_restM_P(:,:,ib,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
+        else
+            PtransS(:,:,ib) = Sens.(append(ObjStr,Param)).MH_B_restAGX_P(:,:,ib,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
+        end
+        
+        x2 = [PtransS(1,1:4,ib) PtransS(1,1,ib)];
+        y2 = [PtransS(2,1:4,ib) PtransS(2,1,ib)];
+
+        
+        if sim == "Matlab"
+            h = fill(x2,y2,color.Matlab); %Matlab box
+        else
+            h = fill(x2,y2,color.Algoryx); %Matlab box
+        end
+        h.FaceAlpha = 0.1;
+        h.EdgeColor = [0 0 0];
+        h.EdgeAlpha = 0.4;
+    end
+
+    xlabel('$(^Mo_B)_x$');
+    ylabel('$(^Mo_B)_y$');
+    axis([-0.1 0.6 -0.1 0.9]);
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/RestPose/sensitivity/',ObjStr,'_',Param,'/Matlab/Rest-Pose_',sprintf('%.2d.pdf',toss_nr)),'-dpdf','-vector'); end
+
+    hold off;
+    %     tel = tel+1;
+end

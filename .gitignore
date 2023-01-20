@@ -11,4 +11,5 @@
 /paramID/SimResults/
 /paramID/AGX_init_states/
 /performance/data
+!/Plotting/230120_DataForPlots.mat
 

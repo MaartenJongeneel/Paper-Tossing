@@ -239,7 +239,7 @@ figure('rend','painters','pos',[500 500 150 195]);
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/RestPose/sensitivity/',ObjStr,'_',Param,'/Matlab/Rest-Pose_',sprintf('%.2d.pdf',toss_nr)),'-dpdf','-vector'); end
 
-%     pause();
+    pause();
 
     hold off;
     end
@@ -280,7 +280,7 @@ figure('rend','painters','pos',[500 500 150 195]);
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/RestPose/sensitivity/',ObjStr,'_',Param,'/AGX/Rest-Pose_',sprintf('%.2d.pdf',toss_nr)),'-dpdf','-vector'); end
 
-%     pause();
+    pause();
 
     hold off;
     end
