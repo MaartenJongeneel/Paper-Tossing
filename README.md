@@ -1,7 +1,7 @@
 <div align="center">
 <h1 align="center">
-Parameter Identification and Validation of Nonsmooth Impact Models
-with Friction
+Experimental Validation of Nonsmooth Dynamics Simulations for
+Robotic Tossing involving Friction and Impacts
 </h1>
 </div>
 <div align="center">
@@ -23,9 +23,9 @@ IEEE Transactions on Robotics (T-RO)
 
 If you are using this paper as reference, please refer to it as
 ```bibtex
-@article{Jongeneel2022_ParameterIdentification,
+@article{Jongeneel2022_ExperimentalValidation,
     author = {M J Jongeneel and L Poort and N van de Wouw and A Saccon},
-    title = {{Parameter Identification and Validation of Nonsmooth Impact Models with Friction}},
+    title = {{Experimental Validation of Nonsmooth Dynamics Simulations for Robotic Tossing involving Friction and Impacts}},
     journal = {IEEE Transactions on Robotics (T-RO)},
     year = {2023},
 }
