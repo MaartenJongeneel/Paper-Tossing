@@ -1,4 +1,5 @@
 import pybullet as p
+import csv
 import time
 import pybullet_data
 physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
@@ -6,6 +7,12 @@ p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
 
 #Set the gravity
 p.setGravity(0,0,-1) #-9.81)
+
+#Import states from csv file
+with open('simstates/test_states.csv','r') as file:
+    csvreader = csv.reader(file)
+    for row in csvreader:
+        print(f'\t{row[12]} {row[13]} {row[14]}')
 
 #Set the box start position,orientation and restitution
 startPos = [0,0,0.1]
