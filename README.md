@@ -36,6 +36,12 @@ If you are using this paper as reference, please refer to it as
 - [Python](https://www.python.org/) (simulations for PyBullet)
 - [Algoryx Dynamics](https://www.algoryx.se/agx-dynamics/) (simulations)
 
+Note that PyBullet can simply be installed using 
+```bash
+sudo pip install pybullet
+```
+once python is installed on your machine. 
+
 ## Datasets
 The following datasets are required to run the code. They can be downloaded via the links below and should be placed in the [data](/data/) folder. 
  - [Archive_003_BoxDrops.h5](https://doi.org/10.4121/17122553) : Archive used for velocity based parameter identification of Box005.
