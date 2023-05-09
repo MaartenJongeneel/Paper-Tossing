@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<robot name="box6">
+  <link name="box6_body">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.2052 0.1554 0.1006"/>
+      </geometry>
+      <material name="CardBoard">
+        <color rgba="0.2667536437511444 0.17454615235328674 0.06440283358097076 1" />
+      </material>
+    </visual>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.365"/>
+      <inertia ixx="0.001040" ixy="0" ixz="0" iyy="0.001590" iyz="0" izz="0.002020" />
+    </inertial>
+    <collision>
+      <geometry>
+        <box size="0.2052 0.1554 0.1006"/>
+      </geometry>
+    </collision>
+  </link>
+</robot>

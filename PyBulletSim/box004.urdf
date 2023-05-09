@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
-<robot name="box1">
-  <link name="box1_body">
+<robot name="box4">
+  <link name="box4_body">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <box size="0.117 0.091 0.066"/>
+        <box size="0.192 0.085 0.108"/>
       </geometry>
       <material name="CardBoard">
         <color rgba="0.2667536437511444 0.17454615235328674 0.06440283358097076 1" />
@@ -12,12 +12,12 @@
     </visual>
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="0.088"/>
-      <inertia ixx="0.000104" ixy="0" ixz="0" iyy="0.000154" iyz="0" izz="0.0001829" />
+      <mass value="0.297"/>
+      <inertia ixx="0.000468" ixy="0" ixz="0" iyy="0.001201" iyz="0" izz="0.001091" />
     </inertial>
     <collision>
       <geometry>
-        <box size="0.117 0.091 0.066"/>
+        <box size="0.192 0.085 0.108"/>
       </geometry>
     </collision>
   </link>
