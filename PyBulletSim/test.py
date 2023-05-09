@@ -10,7 +10,7 @@ p.setGravity(0,0,-1) #-9.81)
 #Set the box start position,orientation and restitution
 startPos = [0,0,0.1]
 startOrientation = p.getQuaternionFromEuler([0,0,0])
-boxId = p.loadURDF("box1.urdf",startPos, startOrientation)
+boxId = p.loadURDF("urdf/box004.urdf",startPos, startOrientation)
 p.changeDynamics(boxId,-1,restitution=0.5)
 
 #Define the camera settings (for visualiztion only)
