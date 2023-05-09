@@ -15,7 +15,7 @@ Robotic Tossing involving Friction and Impacts
 IEEE Transactions on Robotics (T-RO)
 <br>
 <br>
-<a href="/">[Early Paper on HAL]</a>
+<a href="https://hal.science/hal-03974604">[Early Paper on HAL]</a>
 </h3>
 </div>
 
