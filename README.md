@@ -30,8 +30,13 @@ If you are using this paper as reference, please refer to it as
     year = {2023},
 }
 ```
-Requirements
-===========
+# Requirements
+## Software
+- [Matlab](https://www.mathworks.com/products/matlab.html) (main scripts)
+- [Python](https://www.python.org/) (simulations for PyBullet)
+- [Algoryx Dynamics](https://www.algoryx.se/agx-dynamics/) (simulations)
+
+## Datasets
 The following datasets are required to run the code. They can be downloaded via the links below and should be placed in the [data](/data/) folder. 
  - [Archive_003_BoxDrops.h5](https://doi.org/10.4121/17122553) : Archive used for velocity based parameter identification of Box005.
  - [Archive_005_ParamID_Box006.h5](https://doi.org/10.4121/21024007) : Archive used for velocity based parameter identification of Box006 
