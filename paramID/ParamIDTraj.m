@@ -18,15 +18,15 @@ eN    = 0:0.05:1;  %Define the parameter range of eN for which you want to run s
 eT = 0;            %Define the parameter range of eT for which you want to run simulations
 N_pos = 20;        %Number of consecutive points where the error is low
 th_Rmean = 1e-5;   %Threshold rotation mean
-evalAlgoryx = true;
-evalMatlab = true;
+evalAlgoryx = false;
+evalMatlab = false;
 doSave = false;
 
 color.Matlab = [237 176 33]/255;
 color.Algoryx = [77 191 237]/255;
 color.Meas = [128 128 128]/255;
 
-ObjStr = "Box007"; %The object for which you want to do paramID
+ObjStr = "Box004"; %The object for which you want to do paramID
 ImpPln = "ConveyorPart002"; %"ConveyorPart001 GroundPlane001";
 
 %% If Algoryx is used, load the simulation results
@@ -100,15 +100,15 @@ for ii = 1:length(fn)
             g = find(f(2:2:end)-f(1:2:end-1)>=N_pos,1,'first');
             id_rest = t(f(2*g-1))+id_rel-1; % First t followed by >=N_pos consecutive numbers
 
-            figure; plot(((id_rel-20):id_rest+20)*dt,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
-                plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-                plot(id_rest*dt,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-                grid on;
-                xlim([id_rel-20,id_rest+20]*dt);
-                xlabel('Time [s]');
-                ylabel('$(^M\mathbf{o}_B)_z$ [m]');
-                pause
-                close all
+%             figure; plot(((id_rel-20):id_rest+20)*dt,Mo_B(3,(id_rel-20):id_rest+20,tel)); hold on;
+%                 plot(id_rel*dt,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+%                 plot(id_rest*dt,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+%                 grid on;
+%                 xlim([id_rel-20,id_rest+20]*dt);
+%                 xlabel('Time [s]');
+%                 ylabel('$(^M\mathbf{o}_B)_z$ [m]');
+%                 pause
+%                 close all
 
         elseif ObjStr == "Box005"
             t = find(vecnorm(dMo_B(:,4000:end))<0.02); %Find the indices where difference in rel. pos. is small
@@ -205,6 +205,8 @@ for ii = 1:length(fn)
         id(tel,:) = [id_rel,id_rest];
     end
 end
+%% Write the release states to CSV file for PyBullet simulation
+writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('PyBulletSim/simstates/',ObjStr,'_Traj/'));
 %% Write the release states to CSV file for Algoryx simulation
 writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('paramID/',ObjStr,'_Traj/'));
 

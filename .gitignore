@@ -5,6 +5,7 @@
 **.csv
 **.pdf
 **.png
+/.vscode
 /paramID/impact_data
 /paramID/initial_states
 /paramID/results/
