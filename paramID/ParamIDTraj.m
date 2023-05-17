@@ -20,6 +20,7 @@ N_pos = 20;        %Number of consecutive points where the error is low
 th_Rmean = 1e-5;   %Threshold rotation mean
 evalAlgoryx = false;
 evalMatlab = false;
+evalBULLET = true;
 doSave = false;
 
 color.Matlab = [237 176 33]/255;
@@ -209,8 +210,47 @@ end
 writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('PyBulletSim/simstates/',ObjStr,'_Traj/'));
 %% Write the release states to CSV file for Algoryx simulation
 writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('paramID/',ObjStr,'_Traj/'));
+%% -------------------- Evaluate the impacts BULLET -------------------- %%
+if evalBullet
+    %Load the simulation results
+    CSV_PATH = append("PyBulletSim/simstates/",ObjStr,"_Traj/sim_results");
+    fn_bullet = dir(append(CSV_PATH,'/*.csv'));
 
-%% -------------------- Evaluate the impacts Algoryx --------------------%%
+    for is = 1:length(fn_bullet) %loop through all states (each simulated state has its own csv file)
+        bullet_sim_data = table2array(readtable(append(fn_bullet(is).folder,'/',fn_bullet(is).name)));
+        num_par = length(eN)*length(mu);
+        NtimeidxB = 700; %each simulation has 700 time steps
+        eN_i = repelem([0:0.05:1],21);
+        mu_i = repmat([0:0.05:1],1,21);
+        eT_i = 1;
+        for ip = 1:num_par % loop over all 441 simulations of each state 
+            cnt = 1;
+            for ib = ((NtimeidxB*(ip-1))+1):((NtimeidxB*(ip))) %loop over all 700 steps of each simulation
+                MH_B_BUL(:,:,cnt,ip) = [quat2rotm([bullet_sim_data(ib,7) bullet_sim_data(ib,4:6)]), bullet_sim_data(ib,1:3)'; zeros(1,3),1];
+                cnt = cnt+1;
+            end
+
+            Mo_B_meas = Mo_B(:,id(is,1):id(is,1)+NtimeidxB,is);                %Measured position data
+            MR_B_meas = cat(3,MH_Bm(1:3,1:3,id(is,1):id(is,1)+NtimeidxB,is));  %Measured Rotation data
+            Mo_B_B = squeeze(MH_B_BUL(1:3,4,:,ip));                       %Simulated position data
+            MR_B_B = MH_B_BUL(1:3,1:3,:,ip);                              %Simulated Rotation data
+
+            %Compute the cost
+            Endidx = min(id(is,2)-id(is,1)+1,NtimeidxB); %We should normalize BULLET and MATLAB over same time window (Matlab is also stopped after id(is,2)-id(is,1) timesteps)
+            clear e_pos_B e_rot_B %clear previous error values
+            for it = 1:Endidx
+                e_pos_B(it) = norm(Mo_B_meas(:,it)-Mo_B_B(:,it));
+                e_rot_B(it) = norm(logm(MR_B_meas(:,:,it)\MR_B_B(:,:,it))); 
+            end
+
+            %Cost function
+            E_B((single(mu)==single(mu_i(ip))),(single(eN)==single(eN_i(ip))),eT_i,is) = 1/Endidx * (1/Box.dimensions.ds(1)*sum(e_pos_B) + sum(e_rot_B));             
+        end
+        CurrentE_B = E_B(:,:,:,is);
+        [~,optB_idx]= min(CurrentE_B(:));
+    end
+end
+%% -------------------- Evaluate the impacts Algoryx ------------------- %%
 if evalAlgoryx
     % Because we obtain the values for mu, eN, and eT from Algoryx simulations, we delete the values here
     clear mu eN eT
@@ -394,7 +434,7 @@ figure('rend','painters','pos',[pp{3,5} 0.45*sizex 0.6*sizey]);
 
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface
-plotnr = 100;
+plotnr = 50;
 
 ws    = 1.5;  %Width of the contact surface             [m]
 ls    = 1.5;  %Length of the contact surface           [m]
@@ -406,16 +446,19 @@ spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to positio
 
 %Plot the trajectory of the box
 figure('pos',[500 500 500 300]);
-    for ii=id(plotnr,1)+330:id(plotnr,1)+340 %id(plotnr,1):5:(id(plotnr,2))+10
+    for ii=id(plotnr,1):5:(id(plotnr,2))+10
         
         %plot Measured box
         g1 = plotBox(MH_Bm(:,:,ii,plotnr),Box,color.Meas,0);hold on;
         
         %Plot MATLAB box
-%         g2 = plotBox(MH_B_M(:,:,ii-(id(plotnr,1)-1),1),Box,color.Matlab,0); hold on;     
+        g2 = plotBox(MH_B_M(:,:,ii-(id(plotnr,1)-1),1),Box,color.Matlab,0); hold on;     
 
         %Plot new AGX box results
         g3 = plotBox(MH_B_AGX(:,:,ii-(id(plotnr,1)-1),end),Box,color.Algoryx,0);hold on;
+
+        %Plot new BULLET box results
+        g3 = plotBox(MH_B_BUL(:,:,ii-(id(plotnr,1)-1),end),Box,[1 0 0],0);hold on;
 
         %Plot the conveyor C
         table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
@@ -440,8 +483,8 @@ figure('pos',[500 500 500 300]);
         zlabel('z [m]');
 %         view(-118,16);
 %         view(-118,27);
-        view(-315,31);
-%         view(-90,0);
+%         view(-315,31);
+        view(90,1);
         text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
 %         L1 = legend([g1 g2 ],'Measured','Matlab','Algoryx','NumColumns',3,'location','northeast');
 %         L1.Position(2) = 0.90;
