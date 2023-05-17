@@ -366,6 +366,7 @@ end
 %% Evaluate the parameters
 SUMMATLAB = (1/length(E_MATLAB(1,1,1,:)))*sum(E_MATLAB(:,:,:,:),4);
 SUMAGX = (1/length(E_AGX(1,1,1,:)))*sum(E_AGX(:,:,:,:),4);
+SUMBULLET = (1/length(E_B(1,1,1,:)))*sum(E_B(:,:,:,:),4);
 
 
 
@@ -412,7 +413,7 @@ figure('rend','painters','pos',[pp{3,5} 0.45*sizex 0.6*sizey]);
     
 
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
-    print(fig,append('figures/Traj_Based_Cost_Matlab'),'-dpdf','-vector'); end
+    print(fig,append('figures/Box004_Traj_Based_Cost_Matlab'),'-dpdf','-vector'); end
 
 %Plot the cost of Algoryx simulation
 figure('rend','painters','pos',[pp{3,5} 0.45*sizex 0.6*sizey]);
@@ -430,7 +431,25 @@ figure('rend','painters','pos',[pp{3,5} 0.45*sizex 0.6*sizey]);
     zlabel('$\frac{1}{M}\sum_{i=1}^ML_{traj}(i;\mu,e_N)$');
 
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
-    print(fig,append('figures/Traj_Based_Cost_Algoryx'),'-dpdf','-vector'); end
+    print(fig,append('figures/Box004_Traj_Based_Cost_Algoryx'),'-dpdf','-vector'); end
+
+%Plot the cost of BULLET simulation
+figure('rend','painters','pos',[pp{3,6} 0.45*sizex 0.6*sizey]);
+    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    surf(eN,mu,SUMBULLET); 
+    axis square; 
+    view(-40,15); 
+    xlim([0 1]);
+    ylim([0 1]);
+    zlim([0 3]);
+    clim([0.3 2.8]);
+    xlabel('$e_N$');
+    ylabel('$\mu$');
+    zlabel('$\frac{1}{M}\sum_{i=1}^ML_{traj}(i;\mu,e_N)$');    
+
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+    print(fig,append('figures/Box004_Traj_Based_Cost_Bullet'),'-dpdf','-vector'); end
 
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface
