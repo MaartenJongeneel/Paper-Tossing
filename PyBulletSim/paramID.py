@@ -33,7 +33,7 @@ with open(path,'r') as box_states:
 
     for row in boxstates:
 
-        CSV_PATH = 'simstates/' + object + '_' + param + '/sim_results/' + str(row_cnt).zfill(5) + '.csv'
+        CSV_PATH = 'simstates/' + object + '_' + param + '/sim_results/paramID/' + str(row_cnt).zfill(5) + '.csv'
         f = open(CSV_PATH, 'w', newline='')
         writer = csv.writer(f)
 

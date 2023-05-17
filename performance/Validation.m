@@ -8,8 +8,8 @@ addpath(genpath('readH5')); addpath('data');
 %tossed manually on an idle conveyor.
 %% Load the data
 % data = readH5('221021_Archive_011_Box005Box006_Validation.h5');
-% data = readH5('230104_Archive_018_Box004_Validation.h5');
-data = readH5('230104_Archive_020_Box007_Validation.h5');
+data = readH5('230104_Archive_018_Box004_Validation.h5');
+% data = readH5('230104_Archive_020_Box007_Validation.h5');
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -26,7 +26,7 @@ MATLAB.Box006.Traj  = [0.00 0.00 0.40]; %eN eT mu [0.25 0.00 0.40]; %eN eT mu
 MATLAB.Box007.Vel   = [0.60 0.00 0.40];
 MATLAB.Box007.Traj  = [0.00 0.00 0.35]; %eN eT mu [0.45 0.00 0.35];
 
-ObjStr = "Box007"; %The object for which you want to do paramID
+ObjStr = "Box004"; %The object for which you want to do paramID
 ImpPln = "ConveyorPart002"; %"GroundPlane001";
 Param = "Traj";  %Vel or Traj based parameters are tested 
 %% Loop through the data
@@ -161,6 +161,9 @@ writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_
 %% Write the release states to CSV file for MuJoCo simulation
 writeMuJoCoStates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel)
 
+%% Write the release states to CSV file for PyBullet simulation
+writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('PyBulletSim/simstates/',ObjStr,'_Traj/'));
+
 %% Plot figure to demonstrate the release and rest determination
 close all
 plotnr = 1;
@@ -223,6 +226,20 @@ for ia = 1:length(fnAGX)
     MH_B_restAGX(:,:,ia) = MH_B_AGX(:,:,ii,ia);
 end
 
+%% Load the single BULLET simulations
+BULLET_RESULT_FILE = append('PyBulletSim/simstates/',ObjStr,'_',Param,'/sim_results/validation/validation_results.csv');
+bullet_sim_data = table2array(readtable(BULLET_RESULT_FILE));
+num_sim = 50; %We simulate 50 validation states
+NtimeidxB = 700; %each simulation has 700 time steps
+for ip = 1:num_sim % loop over all 50 simulations states
+    cnt = 1;
+    for ib = ((NtimeidxB*(ip-1))+1):((NtimeidxB*(ip))) %loop over all 700 steps of each simulation
+        MH_B_BUL(:,:,cnt,ip) = [quat2rotm([bullet_sim_data(ib,7) bullet_sim_data(ib,4:6)]), bullet_sim_data(ib,1:3)'; zeros(1,3),1];
+        cnt = cnt+1;
+    end
+    MH_B_restB(:,:,ip) = MH_B_BUL(:,:,end,ip);
+end
+
 %% Plot the results of the single Matlab + AGX simulation in smaller figure
 figure('rend','painters','pos',[500 500 150 195]);
     ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
@@ -231,24 +248,29 @@ figure('rend','painters','pos',[500 500 150 195]);
     Ptrans = MH_B_rest(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransM = MH_B_restM(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransA = MH_B_restAGX(:,:,ii)*[Box.vertices.ds';ones(1,8)];
-    x1 = [Ptrans(1,1:4) Ptrans(1,1)];
-    y1 = [Ptrans(2,1:4) Ptrans(2,1)];
-    x2 = [PtransM(1,1:4) PtransM(1,1)];
-    y2 = [PtransM(2,1:4) PtransM(2,1)];
-    x3 = [PtransA(1,1:4) PtransA(1,1)];
-    y3 = [PtransA(2,1:4) PtransA(2,1)];
+    PtransB = MH_B_restB(:,:,ii)*[Box.vertices.ds';ones(1,8)];
+    x1 = [Ptrans(1,1:2) Ptrans(1,6) Ptrans(1,5) Ptrans(1,1)];
+    y1 = [Ptrans(2,1:2) Ptrans(2,6) Ptrans(2,5) Ptrans(2,1)];
+    x2 = [PtransM(1,1:2) PtransM(1,6) PtransM(1,5) PtransM(1,1)]; %[PtransM(1,1:4) PtransM(1,1)];
+    y2 = [PtransM(2,1:2) PtransM(2,6) PtransM(2,5) PtransM(2,1)]; %[PtransM(2,1:4) PtransM(2,1)];
+    x3 = [PtransA(1,1:2) PtransA(1,6) PtransA(1,5) PtransA(1,1)]; %[PtransA(1,1:4) PtransA(1,1)];
+    y3 = [PtransA(2,1:2) PtransA(2,6) PtransA(2,5) PtransA(2,1)]; %[PtransA(2,1:4) PtransA(2,1)];
+    x4 = [PtransB(1,1:2) PtransB(1,6) PtransB(1,5) PtransB(1,1)]; %[PtransB(1,1:4) PtransB(1,1)];
+    y4 = [PtransB(2,1:2) PtransB(2,6) PtransB(2,5) PtransB(2,1)]; %[PtransB(2,1:4) PtransB(2,1)];
     
     fill(x1,y1,color.Meas); %Measured box 
     grid on; hold on;
-    fill(x2,y2,color.Matlab);      %Matlab box
+    fill(x2,y2,color.Matlab);  %Matlab box
     fill(x3,y3,color.Algoryx); %AGX box
+    fill(x4,y4,[1 0 0]);       %BULLET box
     xlabel('$(^M\mathbf{o}_B)_x$');
     ylabel('$(^M\mathbf{o}_B)_y$');
     axis equal
     axis([-0.1 0.6 -0.1 0.9]); 
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/RestPose/',ObjStr,'_',Param,'/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector'); end
-    pause();
+%         print(fig,append('PyBulletSim/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector'); end
+%     pause();
     hold off;
     end
 
