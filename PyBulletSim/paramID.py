@@ -5,8 +5,8 @@ import pybullet_data
 import numpy as np
 
 #Define the object and parameter method (Trajectory (Traj) or Velocity (Vel))
-object = "Box004"
-param = "Traj"
+object = "Box007"
+param = "Vel"
 
 #Import states from csv file. Each row has the structure [startPos[x,y,z] startOrientation[x,y,z,w] linearVelocity[x,y,z] angularVelocity[x,y,z] planePos[x,y,z] planeOrientation[x,y,z,w]] 
 path = 'simstates/' + object + '_' + param + '/test_states.csv'
@@ -21,7 +21,7 @@ with open(path,'r') as box_states:
     #Index to keep count of the number of simulations
     sim_idx = 1
 
-    #Define a list for the box restitution and friction between 0 and 1, steps 0f 0.05
+    #Define a list for the box restitution and friction between 0 and 1, steps of 0.05
     eN, mu = np.linspace(0,1,21), np.linspace(0,1,21)
     # eN, mu = [0],[0]
 
@@ -55,7 +55,10 @@ with open(path,'r') as box_states:
                 #General settings
                 p.setPhysicsEngineParameter(useSplitImpulse = 1) #this should prevent compensations due to penetrations 
                 p.setTimeStep(1/360) #set the timestep
-                Ntimeidx = 700 #run 700 timesteps
+                if param is "Traj":
+                    Ntimeidx = 700 #run 700 timesteps
+                else:
+                    Ntimeidx = 15 #Only run around the impact
 
                 # Set the box initial position, orientation, lin velocity, and angular velocity
                 startPos = [row[0],row[1],row[2]] #[x,y,z]

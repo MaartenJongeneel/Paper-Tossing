@@ -5,11 +5,14 @@ import numpy as np
 
 #Define the object and parameter method (Trajectory (Traj) or Velocity (Vel))
 object = "Box004"
-param = "Traj"
+param = "Vel"
 
 if object == "Box004" and param == "Traj":
     mu = 0.4
     eN = 0.1
+elif object == "Box004" and param == "Vel":
+    mu = 0.65
+    eN = 0.35
 else:
     raise Exception("Combination of object and param is not supported.") 
 
