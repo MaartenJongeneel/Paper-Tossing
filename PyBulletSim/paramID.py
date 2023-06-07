@@ -6,7 +6,7 @@ import numpy as np
 
 #Define the object and parameter method (Trajectory (Traj) or Velocity (Vel))
 object = "Box007"
-param = "Vel"
+param = "Traj"
 
 #Import states from csv file. Each row has the structure [startPos[x,y,z] startOrientation[x,y,z,w] linearVelocity[x,y,z] angularVelocity[x,y,z] planePos[x,y,z] planeOrientation[x,y,z,w]] 
 path = 'simstates/' + object + '_' + param + '/test_states.csv'
@@ -55,7 +55,7 @@ with open(path,'r') as box_states:
                 #General settings
                 p.setPhysicsEngineParameter(useSplitImpulse = 1) #this should prevent compensations due to penetrations 
                 p.setTimeStep(1/360) #set the timestep
-                if param is "Traj":
+                if param == "Traj":
                     Ntimeidx = 700 #run 700 timesteps
                 else:
                     Ntimeidx = 15 #Only run around the impact
