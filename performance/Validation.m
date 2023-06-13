@@ -162,7 +162,7 @@ writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_
 writeMuJoCoStates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel)
 
 %% Write the release states to CSV file for PyBullet simulation
-writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('PyBulletSim/simstates/',ObjStr,'_Traj/'));
+writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('PyBulletSim/simstates/',ObjStr,'_',Param,'/'),'validation_states');
 
 %% Plot figure to demonstrate the release and rest determination
 close all
@@ -240,7 +240,7 @@ for ip = 1:num_sim % loop over all 50 simulations states
     MH_B_restB(:,:,ip) = MH_B_BUL(:,:,end,ip);
 end
 
-%% Plot the results of the single Matlab + AGX simulation in smaller figure
+%% Plot the results of the single Matlab + AGX + BULLET simulation in smaller figure
 figure('rend','painters','pos',[500 500 150 195]);
     ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
@@ -249,14 +249,26 @@ figure('rend','painters','pos',[500 500 150 195]);
     PtransM = MH_B_restM(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransA = MH_B_restAGX(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransB = MH_B_restB(:,:,ii)*[Box.vertices.ds';ones(1,8)];
-    x1 = [Ptrans(1,1:2) Ptrans(1,6) Ptrans(1,5) Ptrans(1,1)];
-    y1 = [Ptrans(2,1:2) Ptrans(2,6) Ptrans(2,5) Ptrans(2,1)];
-    x2 = [PtransM(1,1:2) PtransM(1,6) PtransM(1,5) PtransM(1,1)]; %[PtransM(1,1:4) PtransM(1,1)];
-    y2 = [PtransM(2,1:2) PtransM(2,6) PtransM(2,5) PtransM(2,1)]; %[PtransM(2,1:4) PtransM(2,1)];
-    x3 = [PtransA(1,1:2) PtransA(1,6) PtransA(1,5) PtransA(1,1)]; %[PtransA(1,1:4) PtransA(1,1)];
-    y3 = [PtransA(2,1:2) PtransA(2,6) PtransA(2,5) PtransA(2,1)]; %[PtransA(2,1:4) PtransA(2,1)];
-    x4 = [PtransB(1,1:2) PtransB(1,6) PtransB(1,5) PtransB(1,1)]; %[PtransB(1,1:4) PtransB(1,1)];
-    y4 = [PtransB(2,1:2) PtransB(2,6) PtransB(2,5) PtransB(2,1)]; %[PtransB(2,1:4) PtransB(2,1)];
+    if ObjStr == "Box004"
+        x1 = [Ptrans(1,1:2) Ptrans(1,6) Ptrans(1,5) Ptrans(1,1)];
+        y1 = [Ptrans(2,1:2) Ptrans(2,6) Ptrans(2,5) Ptrans(2,1)];
+        x2 = [PtransM(1,1:2) PtransM(1,6) PtransM(1,5) PtransM(1,1)]; 
+        y2 = [PtransM(2,1:2) PtransM(2,6) PtransM(2,5) PtransM(2,1)]; 
+        x3 = [PtransA(1,1:2) PtransA(1,6) PtransA(1,5) PtransA(1,1)]; 
+        y3 = [PtransA(2,1:2) PtransA(2,6) PtransA(2,5) PtransA(2,1)]; 
+        x4 = [PtransB(1,1:2) PtransB(1,6) PtransB(1,5) PtransB(1,1)]; 
+        y4 = [PtransB(2,1:2) PtransB(2,6) PtransB(2,5) PtransB(2,1)]; 
+    else
+        x1 = [Ptrans(1,1:4) Ptrans(1,1)];
+        y1 = [Ptrans(2,1:4) Ptrans(2,1)];
+        x2 = [PtransM(1,1:4) PtransM(1,1)]; 
+        y2 = [PtransM(2,1:4) PtransM(2,1)]; 
+        x3 = [PtransA(1,1:4) PtransA(1,1)]; 
+        y3 = [PtransA(2,1:4) PtransA(2,1)]; 
+        x4 = [PtransB(1,1:4) PtransB(1,1)]; 
+        y4 = [PtransB(2,1:4) PtransB(2,1)]; 
+    end
+
     
     fill(x1,y1,color.Meas); %Measured box 
     grid on; hold on;
@@ -270,7 +282,7 @@ figure('rend','painters','pos',[500 500 150 195]);
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/RestPose/',ObjStr,'_',Param,'/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector'); end
 %         print(fig,append('PyBulletSim/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector'); end
-%     pause();
+    pause();
     hold off;
     end
 

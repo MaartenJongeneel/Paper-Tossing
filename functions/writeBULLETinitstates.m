@@ -1,4 +1,4 @@
-function writeBULLETinitstates(MR_B,Mo_B,Bv_MB,Bw_MB,MR_C,Mo_C,fnname)
+function writeBULLETinitstates(MR_B,Mo_B,Bv_MB,Bw_MB,MR_C,Mo_C,fnname,filename)
 %% Writing initial states to csv file
 %Function to write the release states (initial states of the simulation) to
 %csv files to be used as input for the PyBullet simulation
@@ -9,6 +9,8 @@ function writeBULLETinitstates(MR_B,Mo_B,Bv_MB,Bw_MB,MR_C,Mo_C,fnname)
 %            Bw_MB   : 3-by-1-by-N matrix, angular velocity of the box at release
 %            MR_C    : 3-by-3-by-N matrix, orientation of the contact frame
 %            Mo_C    : 3-by-1-by-N matrix, position of the contact frame
+%            fnname  : path to folder to write to
+%            filename: name of the file (without .csv extension)
 %
 % OUTPUTS:   -       : Writes the box states and conveyor states to a csv
 %                      file
@@ -41,4 +43,4 @@ end
 if ~isfolder(fnname)
     mkdir(fnname);
 end
-writecell(states_csv,append(fnname,'/test_states.csv'));
+writecell(states_csv,append(fnname,'/',filename,'.csv'));

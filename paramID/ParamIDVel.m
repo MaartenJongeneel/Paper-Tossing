@@ -13,13 +13,14 @@ close all; set(groot,'defaulttextinterpreter','latex'); set(groot,'defaultAxesTi
 
 %% ------------------------------ Settings ------------------------------%%
 %These will be input parsers to a function
-Object = 'Box007';
+Object = 'Box004';
 Environment = "Conveyor002";  %Select what conveyor you want to consider
 impact_data = append('paramID/',Object,'_Vel/',Object,'_impacts.mat');
 AGXResult_h5file = append('paramID/',Object,'_Vel/',Object,'_ParamID_Vel_BoxTossBatch_result.hdf5');
 evalAlgoryx = true;
 evalMatlab = true;
 evalMuJoCo = false;
+evalBullet = true;
 
 
 dt        = 1/360;  %OptiTrack time step
@@ -80,6 +81,47 @@ writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_
 
 %% Write the release states to CSV file for MuJoCO simulations
 writeMuJoCoStates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel)
+%% Write the release states to CSV file for PyBullet simulation
+writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_C_rel(1:3,1:3,:),MH_C_rel(1:3,4,:),append('PyBulletSim/simstates/',Object,'_Vel/'),'test_states');
+%% -------------------- Evaluate the impacts BULLET -------------------- %%
+if evalBullet
+    %Load the simulation results
+    CSV_PATH = append("PyBulletSim/simstates/",Object,"_Vel/sim_results/paramID/");
+    fn_bullet = dir(append(CSV_PATH,'/*.csv'));
+
+    for is = 1:length(fn_bullet) %loop through all states (each simulated state has its own csv file)
+        BCV_CBef   = cell2mat(impacts.BCV_CBef(imp_sel(is),:));
+        MH_C       = impacts.MH_C(imp_sel(is));
+        Mo_C       = MH_C{1}(1:3,4);
+        MR_C       = MH_C{1}(1:3,1:3);
+
+        indx_b = impacts.indx(imp_sel(is),3) - impacts.indx(imp_sel(is),2)+6;
+        indx_c = impacts.indx(imp_sel(is),4) - impacts.indx(imp_sel(is),2)+6;
+
+        bullet_sim_data = table2array(readtable(append(fn_bullet(is).folder,'/',fn_bullet(is).name)));
+        num_par = length(eN)*length(mu);
+        NtimeidxB = 15; %each simulation has 15 time steps
+        eN_i = repelem([0:0.05:1],21);
+        mu_i = repmat([0:0.05:1],1,21);
+        eT_i = 1;
+        for ip = 1:num_par % loop over all 441 simulations of each state 
+            cnt = 1;
+            for ib = ((NtimeidxB*(ip-1))+1):((NtimeidxB*(ip))) %loop over all 15 steps of each simulation
+                MH_B_BUL(:,:,cnt,ip) = [quat2rotm([bullet_sim_data(ib,7) bullet_sim_data(ib,4:6)]), bullet_sim_data(ib,1:3)'; zeros(1,3),1];
+                BMV_MB_BUL(:,cnt) = bullet_sim_data(ib,8:13)';
+                MX_B = [MH_B_BUL(1:3,1:3,cnt,ip), zeros(3,3); zeros(3,3), MH_B_BUL(1:3,1:3,cnt,ip)];
+                BV_MB_BUL(:,cnt) = MX_B\BMV_MB_BUL(:,cnt);
+                BCV_MB_BUL(:,cnt,ip) = [MR_C\MH_B_BUL(1:3,1:3,cnt,ip)*BV_MB_BUL(1:3,cnt);MR_C\MH_B_BUL(1:3,1:3,cnt,ip)*BV_MB_BUL(4:6,cnt)];
+                cnt = cnt+1;
+            end
+
+            %Cost function
+            E_B((single(mu)==single(mu_i(ip))),(single(eN)==single(eN_i(ip))),eT_i,is) = norm(diag(weight)*(BCV_CBef(:,indx_c)-BCV_MB_BUL(:,indx_c,ip)));            
+        end
+        CurrentE_B = E_B(:,:,:,is);
+        [~,optB_idx]= min(CurrentE_B(:));
+    end
+end
 %% -------------------- Evaluate the impacts Algoryx --------------------%%
 if evalAlgoryx
     % Because we obtain the values for mu, eN, and eT from Algoryx
@@ -262,6 +304,10 @@ if evalMatlab
     mwi = mwi./sum(mwi);  %Normalize the weights
     SUMMATLAB = (1/length(E_MATLAB(1,1,1,good)))*sum(E_MATLAB(:,:,:,good),4);
 end
+if evalBullet
+    SUMBULLET = (1/length(E_B(1,1,1,:)))*sum(E_B(:,:,:,:),4);
+end
+
 
 clear meanM_mu stdM_mu meanM_eN stdM_eN meanA_mu stdA_mu meanA_eN stdA_eN
 
@@ -291,7 +337,7 @@ if evalMatlab
     axes(ha(1));
     surf(eN,mu,SUMMATLAB); axis square;
     xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{i=1}^N L_{vel}(\mu,e_N)_i$');
-    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
+    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:)) max(SUMBULLET(:))])]);
     xlim([0 1]);
     ylim([0 1]);
     view(-40,15);
@@ -305,13 +351,26 @@ if evalAlgoryx
     axes(ha(1));
     surf(eN,mu,SUMAGX); axis square;
     xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{i=1}^N L_{vel}(\mu,e_N)_i$');
-    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
+    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:)) max(SUMBULLET(:))])]);
     xlim([0 1]);
     ylim([0 1]);
     view(-40,15);
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/',Object,'/Cost_SUMAGX.pdf'),'-dpdf','-vector'); end
-    
+        print(fig,append('figures/',Object,'/Cost_SUMAGX.pdf'),'-dpdf','-vector'); end    
+end
+if evalBullet    
+    % Plot the combined cost of BULLET
+    figure('rend','painters','pos',[pp{1,5} 0.7*sizex sizey]);
+    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    surf(eN,mu,SUMBULLET); axis square;
+    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{N}\sum_{i=1}^N L_{vel}(\mu,e_N)_i$');
+    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:)) max(SUMBULLET(:))])]);
+    xlim([0 1]);
+    ylim([0 1]);
+    view(-40,15);
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/',Object,'/Cost_SUMBULLET.pdf'),'-dpdf','-vector'); end    
 end
     
 %

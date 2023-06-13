@@ -6,7 +6,7 @@ addpath(genpath('readH5')); addpath('data');
 % long-horizon tosses and find the parameters that minimize the error in
 % position and orientation over the full trajectory
 %% Load the data
-data = readH5('230104_Archive_017_Box004_ParamID_Traj.h5');
+% data = readH5('230104_Archive_017_Box004_ParamID_Traj.h5');
 % data = readH5('220920_Box005_ParamID_Traj.h5');
 % data = readH5('220920_Box006_ParamID_Traj.h5');
 % data = readH5('230104_Archive_019_Box007_ParamID_Traj.h5');
@@ -209,11 +209,11 @@ end
 %% Write the release states to CSV file for PyBullet simulation
 writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('PyBulletSim/simstates/',ObjStr,'_Traj/'));
 %% Write the release states to CSV file for Algoryx simulation
-writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('paramID/',ObjStr,'_Traj/'));
+writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('paramID/',ObjStr,'_Traj/'),'test_states');
 %% -------------------- Evaluate the impacts BULLET -------------------- %%
-if evalBullet
+if evalBULLET
     %Load the simulation results
-    CSV_PATH = append("PyBulletSim/simstates/",ObjStr,"_Traj/sim_results");
+    CSV_PATH = append("PyBulletSim/simstates/",ObjStr,"_Traj/sim_results/paramID/");
     fn_bullet = dir(append(CSV_PATH,'/*.csv'));
 
     for is = 1:length(fn_bullet) %loop through all states (each simulated state has its own csv file)
