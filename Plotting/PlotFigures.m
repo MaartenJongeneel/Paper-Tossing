@@ -22,34 +22,47 @@ color.BlueLight = [0 0.4470 0.7410 0.5];
 color.RedLight = [0.8500 0.3250 0.0980 0.5];
 color.Matlab = [85 122 149]/255;%[237 176 33]/255;
 color.Algoryx = [220 217 208]/255;%[77 191 237]/255;
+color.Bullet = [255 0 0]/255;%[77 191 237]/255;
 color.Meas = [128 128 128]/255;
  
-%% Plot the Vel based combined cost of Matlab
+%% Plot the Vel based combined cost of Matlab (Box006)
 figure('rend','painters','pos',[pp{5,1} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 -0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMMATLAB); axis square;
     xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{M}\sum_{i=1}^M L_{vel}(i;\mu,e_N)$');
-    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
+    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:)) max(SUMBULLET(:))])]);
     xlim([0 1]);
     ylim([0 1]);
     view(-40,15);
     if doSave;fig = gcf;fig.PaperPositionMode = 'auto';fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/CostMatlab.pdf'),'-dpdf','-vector'); end
     
-%% Plot the Vel based combined cost of AGX
+%% Plot the Vel based combined cost of AGX (Box006)
 figure('rend','painters','pos',[pp{5,2} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 -0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
     surf(eN,mu,SUMAGX); axis square;
     xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{M}\sum_{i=1}^M L_{vel}(i;\mu,e_N)$');
-    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:))])]);
+    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:)) max(SUMBULLET(:))])]);
     xlim([0 1]);
     ylim([0 1]);
     view(-40,15);
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/CostAlgoryx.pdf'),'-dpdf','-vector'); end
     
+%% Plot the Vel based combined cost of BULLET (Box006)
+figure('rend','painters','pos',[0 0 0.45*sizex 0.6*sizey]);
+    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 -0.05]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    surf(eN,mu,SUMBULLET); axis square;
+    xlabel('$e_N$');ylabel('$\mu$');zlabel('$\frac{1}{M}\sum_{i=1}^M L_{vel}(i;\mu,e_N)$');
+    zlim([0 max([max(SUMMATLAB(:)) max(SUMAGX(:)) max(SUMBULLET(:))])]);
+    xlim([0 1]);
+    ylim([0 1]);
+    view(-40,15);
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/CostAlgoryx.pdf'),'-dpdf','-vector'); end
     
 %% Plot the hybrid velocities from measurements around the impact time
 figure('rend','painters','pos',[pp{4,7} sizex 1.7*sizey]);
@@ -222,7 +235,7 @@ figure('rend','painters','pos',[pp{3,11} sizex 200]);
         print(fig,'figures/impact_selection.pdf','-dpdf','-vector'); end
 
 
-%% Plot the Traj based cost of MATLAB simulation
+%% Plot the Traj based cost of MATLAB simulation (Box006)
 figure('rend','painters','pos',[pp{5,3} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
@@ -239,7 +252,7 @@ figure('rend','painters','pos',[pp{5,3} 0.45*sizex 0.6*sizey]);
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
     print(fig,append('figures/Traj_Based_Cost_Matlab'),'-dpdf','-vector'); end
 
-%% Plot the Traj based cost of Algoryx simulation
+%% Plot the Traj based cost of Algoryx simulation (Box006)
 figure('rend','painters','pos',[pp{5,4} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
@@ -255,6 +268,23 @@ figure('rend','painters','pos',[pp{5,4} 0.45*sizex 0.6*sizey]);
     zlabel('$\frac{1}{M}\sum_{i=1}^ML_{traj}(i;\mu,e_N)$');
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
     print(fig,append('figures/Traj_Based_Cost_Algoryx'),'-dpdf','-vector'); end
+
+%% Plot the Traj based cost of PyBullet simulation (Box006)
+figure('rend','painters','pos',[pp{5,4} 0.45*sizex 0.6*sizey]);
+    ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    surf(eN,mu,SUMBULLETtraj); 
+    axis square; 
+    view(-40,15); 
+    xlim([0 1]);
+    ylim([0 1]);
+    zlim([0 3]);
+    clim([0.3 2.8]);
+    xlabel('$e_N$');
+    ylabel('$\mu$');
+    zlabel('$\frac{1}{M}\sum_{i=1}^ML_{traj}(i;\mu,e_N)$');
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+    print(fig,append('figures/Traj_Based_Cost_Bullet'),'-dpdf','-vector'); end
 
 %% Plot measured trajectory in 3D for paper figure
 % Plotting options For plotting the contact surface
@@ -352,17 +382,21 @@ for jj = 1:12
     Ptrans = Val.(append(ObjStr,Method)).MH_B_rest(:,:,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
     PtransM = Val.(append(ObjStr,Method)).MH_B_restM(:,:,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
     PtransA = Val.(append(ObjStr,Method)).MH_B_restAGX(:,:,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
+    PtransB = Val.(append(ObjStr,Method)).MH_B_restB(:,:,plotidx(jj))*[Boxes.(ObjStr).vertices.ds';ones(1,8)];
     x1 = [Ptrans(1,1:4) Ptrans(1,1)];
     y1 = [Ptrans(2,1:4) Ptrans(2,1)];
     x2 = [PtransM(1,1:4) PtransM(1,1)];
     y2 = [PtransM(2,1:4) PtransM(2,1)];
     x3 = [PtransA(1,1:4) PtransA(1,1)];
     y3 = [PtransA(2,1:4) PtransA(2,1)];
+    x4 = [PtransB(1,1:4) PtransB(1,1)];
+    y4 = [PtransB(2,1:4) PtransB(2,1)];
 
     fill(x1,y1,color.Meas); %Measured box
     grid on; hold on;
-    fill(x2,y2,color.Matlab);      %Matlab box
+    fill(x2,y2,color.Matlab);  %Matlab box
     fill(x3,y3,color.Algoryx); %AGX box
+    fill(x4,y4,color.Bullet); %Bullet box
     xlabel('$(^M\mathbf{o}_B)_x$');
     ylabel('$(^M\mathbf{o}_B)_y$');
     axis equal

@@ -229,7 +229,7 @@ end
 %% Load the single BULLET simulations
 BULLET_RESULT_FILE = append('PyBulletSim/simstates/',ObjStr,'_',Param,'/sim_results/validation/validation_results.csv');
 bullet_sim_data = table2array(readtable(BULLET_RESULT_FILE));
-num_sim = 50; %We simulate 50 validation states
+num_sim = 100; %We simulate 50 validation states
 NtimeidxB = 700; %each simulation has 700 time steps
 for ip = 1:num_sim % loop over all 50 simulations states
     cnt = 1;
