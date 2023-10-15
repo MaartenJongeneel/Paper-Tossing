@@ -62,7 +62,7 @@ figure('rend','painters','pos',[0 0 0.45*sizex 0.6*sizey]);
     ylim([0 1]);
     view(-40,15);
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
-        print(fig,append('figures/CostAlgoryx.pdf'),'-dpdf','-vector'); end
+        print(fig,append('figures/CostBullet.pdf'),'-dpdf','-vector'); end
     
 %% Plot the hybrid velocities from measurements around the impact time
 figure('rend','painters','pos',[pp{4,7} sizex 1.7*sizey]);

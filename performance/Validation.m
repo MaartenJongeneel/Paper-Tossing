@@ -294,19 +294,26 @@ for ii =1:tel
     end    
     E_rot_M(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restM(1:3,1:3,ii)));
     E_rot_A(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX(1:3,1:3,ii)));
+    E_rot_B(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restB(1:3,1:3,ii)));
     E_pos_M(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restM(1:3,4,ii))';
     E_pos_A(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
+    E_pos_B(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restB(1:3,4,ii))';
     teller = teller+1;
 end
-
+col=1;
+if ObjStr == "Box004"; col=2; end;
 e_pos_M = mean(vecnorm(E_pos_M(:,1:2)'));
 std_pos_M = std(vecnorm(E_pos_M(:,1:2)'));
-e_rot_M = mean(abs(E_rot_M(:,1)));
-std_rot_M = std(abs(E_rot_M(:,1)));
+e_rot_M = mean(abs(E_rot_M(:,col)));
+std_rot_M = std(abs(E_rot_M(:,col)));
 e_pos_A = mean(vecnorm(E_pos_A(:,1:2)'));
 std_pos_A = std(vecnorm(E_pos_A(:,1:2)'));
-e_rot_A = mean(abs(E_rot_A(:,1)));
-std_rot_A = std(abs(E_rot_A(:,1)));
+e_rot_A = mean(abs(E_rot_A(:,col)));
+std_rot_A = std(abs(E_rot_A(:,col)));
+e_pos_B = mean(vecnorm(E_pos_B(:,1:2)'));
+std_pos_B = std(vecnorm(E_pos_B(:,1:2)'));
+e_rot_B = mean(abs(E_rot_B(:,col)));
+std_rot_B = std(abs(E_rot_B(:,col)));
 
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface

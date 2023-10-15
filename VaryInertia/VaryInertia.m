@@ -4,7 +4,8 @@ addpath(genpath('readH5')); addpath('data');
 %Goal is to see how the varying mass affects the predictability of the
 %restpose
 %% Load the data
-data = readH5('221021_Archive_011_Box005Box006_Validation.h5'); %Using dataset for validation also for sensitivity
+% data = readH5('221021_Archive_011_Box005Box006_Validation.h5'); %Using dataset for validation also for sensitivity
+data = readH5('230104_Archive_020_Box007_Validation.h5'); %Using dataset for validation also for sensitivity
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -14,17 +15,13 @@ N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
 MATLAB.Box005.Traj  = [0.10 0.00 0.45]; %eN eT mu
 MATLAB.Box006.Traj  = [0.25 0.00 0.40]; %eN eT mu
+MATLAB.Box007.Traj  = [0.45 0.00 0.35]; 
 Algoryx.Box005.Traj = [0.00 0.00 0.40]; %eN eT mu
 Algoryx.Box006.Traj = [0.30 0.00 0.40]; %eN eT mu
 
-% MATLAB_eN_sigma = 0.125; %Covariance of eN parameter set (not covariance of mean!)
-% MATLAB_mu_sigma = 0.124; %Covariance of mu parameter set (not covariance of mean!)
-% Algoryx_eN_sigma = 0.127; %Covariance of eN parameter set (not covariance of mean!)
-% Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
-
-
-ObjStr = "Box006"; %The object for which you want to do paramID
-ImpPln = "GroundPlane001";
+ObjStr = "Box007"; %The object for which you want to do paramID
+% ImpPln = "GroundPlane001";
+ImpPln = "ConveyorPart002"; %For Box007
 Param = "mass";  %Sensitivity of mu or eN 
 
 %% Loop through the data
@@ -99,14 +96,21 @@ for ii = 1:length(fn)
             [pks,id_rel] = findpeaks(Mo_B(3,100:end,tel),'MinPeakHeight',0.08,'MinPeakWidth',10);
             id_rel = id_rel+99;            
             id_rel = id_rel(1);
+        elseif ObjStr == "Box007"
+            if ii==31
+                [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12,'MinPeakWidth',10);
+            else
+            [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.115,'MinPeakWidth',10);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
+            id_rel = id_rel(end);
+            end
         end
 
-%             figure; plot(Mo_B(3,:,tel)); hold on;
-%                 plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-%                 plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-%                 grid on;
-%                 pause
-%                 close all
+            figure; plot(Mo_B(3,:,tel)); hold on;
+                plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+                plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+                grid on;
+                pause
+                close all
         
         %------------- Determine the relative release-pose --------------%
         Mo_B_rel(:,tel) = Mo_B(:,id_rel,tel);
@@ -278,11 +282,13 @@ figure('rend','painters','pos',[500 500 150 195]);
 %     hold off;
 %     end
 %% Compute the errors of the rest-orientation and rest-position
-for ii =1:5%tel
+for ii =1:tel
     E_rot_M(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restM_P(1:3,1:3,6,ii)));
 %     E_rot_A(ii,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX_P(1:3,1:3,6,ii)));
     E_pos_M(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restM_P(1:3,4,6,ii))';
-%     E_pos_A(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX_P(1:3,4,6,ii))';
+    E_pos_M_deviation(ii,:)= mean(vecnorm(squeeze(MH_B_restM_P(1:3,4,6,ii)-MH_B_restM_P(1:3,4,:,ii)))); % mean pos deviation of varied mass to perfect mass
+    E_rot_M_deviation(ii,:) = mean(abs(rad2deg(rotm2eul(MH_B_restM_P(1:3,1:3,6,ii))-rotm2eul(MH_B_restM_P(1:3,1:3,:,ii)))),1); % mean rot deviation of varied mass to perfect mass
+    %     E_pos_A(ii,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX_P(1:3,4,6,ii))';
     E_pos_M_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restM_P(1:3,4,:,ii))),2))';
 %     E_pos_A_P(ii,:) = (MH_B_rest(1:3,4,ii)-mean(squeeze((MH_B_restAGX_P(1:3,4,:,ii))),2))';
 end
