@@ -1,0 +1,3 @@
+[submodule "readyaml"]
+	path = readyaml
+	url = https://github.com/MaartenJongeneel/readyaml

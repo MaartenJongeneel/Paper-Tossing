@@ -8,27 +8,28 @@ addpath(genpath('readH5')); addpath('data');
 %% Load the data
 % data = readH5('230104_Archive_017_Box004_ParamID_Traj.h5');
 % data = readH5('220920_Box005_ParamID_Traj.h5');
-% data = readH5('220920_Box006_ParamID_Traj.h5');
+data = readH5('220920_Box006_ParamID_Traj.h5');
 % data = readH5('230104_Archive_019_Box007_ParamID_Traj.h5');
 
 
 %% Constants
-mu    = 0:0.05:1;  %Define the parameter range of mu for which you want to run simulations
-eN    = 0:0.05:1;  %Define the parameter range of eN for which you want to run simulations
+mu    = 0:0.2:1;  %Define the parameter range of mu for which you want to run simulations
+eN    = 0:0.2:1;  %Define the parameter range of eN for which you want to run simulations
+scale = 0:0.2:1;  %Define the scale of the extra points on the surface (drilling friction)
 eT = 0;            %Define the parameter range of eT for which you want to run simulations
 N_pos = 20;        %Number of consecutive points where the error is low
 th_Rmean = 1e-5;   %Threshold rotation mean
 evalAlgoryx = false;
-evalMatlab = false;
-evalBULLET = true;
+evalMatlab = true;
+evalBULLET = false;
 doSave = false;
 
 color.Matlab = [237 176 33]/255;
 color.Algoryx = [77 191 237]/255;
 color.Meas = [128 128 128]/255;
 
-ObjStr = "Box004"; %The object for which you want to do paramID
-ImpPln = "ConveyorPart002"; %"ConveyorPart001 GroundPlane001";
+ObjStr = "Box006"; %The object for which you want to do paramID
+ImpPln = "ConveyorPart001"; %"ConveyorPart001 GroundPlane001";
 
 %% If Algoryx is used, load the simulation results
 AGXResult_h5file = append('paramID/',ObjStr,'_Traj/',ObjStr,'_ParamID_Traj_BoxTossBatch_result.hdf5');
@@ -207,9 +208,9 @@ for ii = 1:length(fn)
     end
 end
 %% Write the release states to CSV file for PyBullet simulation
-writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('PyBulletSim/simstates/',ObjStr,'_Traj/'));
+% writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('PyBulletSim/simstates/',ObjStr,'_Traj/'));
 %% Write the release states to CSV file for Algoryx simulation
-writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('paramID/',ObjStr,'_Traj/'),'test_states');
+% writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),MH_Ca(1:3,1:3,:),MH_Ca(1:3,4,:),append('paramID/',ObjStr,'_Traj/'),'test_states');
 %% -------------------- Evaluate the impacts BULLET -------------------- %%
 if evalBULLET
     %Load the simulation results
@@ -320,24 +321,58 @@ if evalMatlab
     %Obtain the vectors of mu, eN, and eT for which we run the
     %parameter identification. If evalAlgoryx is true, the vectors for mu1,
     %eN1, and eT1 are defined there. Otherwise, it will grab the defaults.
-    muvec = repmat(mu,1,length(eN)*length(eT));
-    eNvec = repmat(repelem(eN,length(mu)),1,length(eT));
-    eTvec = repelem(eT,length(mu)*length(eN));
+    muvec = repmat(mu,1,length(eN)*length(scale));
+    eNvec = repmat(repelem(eN,length(mu)),1,length(scale));
+    scvec = repelem(scale,length(mu)*length(eN));
+%     scvec = repelem(scale,)
 
+clear x
     for is = 1:tel
-        for ip = 1:(length(mu)*length(eN)*length(eT)) %For all parameters 
+        for ip = 1:(length(mu)*length(eN)*length(scale)) %For all parameters 
             %Obtain MATLAB results
             Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
-            [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eNvec(ip),eTvec(ip),muvec(ip),Box,MH_Ca(1:3,1:3,tel),MH_Ca(1:3,4,tel),dt,Ntimeidx);
-            MH_B_M = cat(3,MH_B_MATLAB{:});
+            x.releasePosition = MH_B_rel(1:3,4,is);
+            x.releaseOrientation = MH_B_rel(1:3,1:3,is);
+            x.releaseLinVel = BV_MB_rel(1:3,is);
+            x.releaseAngVel = BV_MB_rel(4:6,is);
+            c.eN = eNvec(ip);
+            c.eT = 0; %eTvec(ip);
+            c.mu = muvec(ip);
+            c.dt = dt;
+            c.endtime = dt*Ntimeidx;
+            c.a = 1e-3;
+            c.tol = 1e-5;
+            c.dimd = 16;
+            box.B_M_B = Box.inertia.ds;
+            box.mass = Box.mass.ds;
+            box.vertices = Box.vertices.ds';
+            box.dimensions = Box.dimensions.ds;
+            surface{1}.dim = [2,2];
+            surface{1}.speed = [0; 0; 0];
+            surface{1}.transform = MH_Ca(:,:,tel);
+
+            %Discretize the box dimensions
+            sc=scvec(ip); %Between [0 1]
+            [X,Y,Z]=meshgrid(linspace(-box.dimensions(1)/2,box.dimensions(1)/2,2),linspace(-box.dimensions(2)/2,box.dimensions(2)/2,2),linspace(-box.dimensions(3)/2,box.dimensions(3)/2,2));
+            vertices= [X(:)';Y(:)';Z(:)'];
+            xpoints = [X(:)';sc*Y(:)';sc*Z(:)'];
+            ypoints = [sc*X(:)';Y(:)';sc*Z(:)'];
+            zpoints = [sc*X(:)';sc*Y(:)';Z(:)'];
+
+            box.vertices = [vertices xpoints ypoints zpoints];
+
+            [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(x,c,box,surface);
+
+%             [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),eNvec(ip),eTvec(ip),muvec(ip),Box,MH_Ca(1:3,1:3,tel),MH_Ca(1:3,4,tel),dt,Ntimeidx);
+%             MH_B_M = cat(3,MH_B_MATLAB{:});
 
             Mo_B_meas = Mo_B(:,id(is,1):id(is,2),is);                %Measured position data
             MR_B_meas = cat(3,MH_Bm(1:3,1:3,id(is,1):id(is,2),is));  %Measured Rotation data
-            Mo_B_M = squeeze(MH_B_M(1:3,4,:));                       %Simulated position data
-            MR_B_M = MH_B_M(1:3,1:3,:);                              %Simulated Rotation data
+            Mo_B_M = squeeze(MH_B_MATLAB(1:3,4,:));                       %Simulated position data
+            MR_B_M = MH_B_MATLAB(1:3,1:3,:);                              %Simulated Rotation data
 
             %Current used index of the parameters
-            mu_i = find(muvec(ip) == mu);  eN_i = find(eNvec(ip) == eN); eT_i = find(eTvec(ip) == eT);
+            mu_i = find(muvec(ip) == mu);  eN_i = find(eNvec(ip) == eN); sc_i = find(scvec(ip) == scale);
             
             %Compute the cost
             clear e_pos e_rot %Clear previous error values
@@ -347,7 +382,8 @@ if evalMatlab
             end
 
             %Cost function
-            E_MATLAB(mu_i,eN_i,eT_i,is) = 1/Ntimeidx * (1/Box.dimensions.ds(1)*sum(e_pos) + sum(e_rot)); 
+            E_MATLAB(mu_i,eN_i,sc_i,is) = 1/Ntimeidx * (1/Box.dimensions.ds(1)*sum(e_pos) + rad2deg(sum(e_rot))); 
+            textwaitbar(ip, (length(mu)*length(eN)*length(scale)),"Progress   ")
         end
 
         CurrentE_MATLAB = E_MATLAB(:,:,:,is);
@@ -357,7 +393,7 @@ if evalMatlab
         if length(a1)==1 && length(b1)==1 && length(c1)==1
             MATLABmu_opt(is) = mu(a1);
             MATLABeN_opt(is) = eN(b1);
-            MATLABeT_opt(is) = eT(c1);
+            MATLABsc_opt(is) = scale(c1);
         end
     end
 end
@@ -400,13 +436,15 @@ end
 figure('rend','painters','pos',[pp{3,5} 0.45*sizex 0.6*sizey]);
     ha = tight_subplot(1,1,[.08 .07],[.18 .1],[0.12 0.03]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
-    surf(eN,mu,SUMMATLAB); 
+    for jj = 1:length(SUMMATLAB(1,1,:))
+        surf(eN,mu,SUMMATLAB(:,:,jj)); hold on;
+    end
     axis square; 
     view(-40,15); 
     xlim([0 1]);
     ylim([0 1]);
-    zlim([0 3]);
-    clim([0.3 2.8]);
+    zlim([6 18]);
+    clim([0.3 10]);
     xlabel('$e_N$');
     ylabel('$\mu$');
     zlabel('$\frac{1}{M}\sum_{i=1}^ML_{traj}(i;\mu,e_N)$');

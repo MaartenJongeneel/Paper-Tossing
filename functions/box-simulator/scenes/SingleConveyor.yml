@@ -1,0 +1,35 @@
+# Configuration file for the box-simulator
+# Parameters of the Box
+box:
+ mass: 1
+ dimensions: [0.1, 0.15, 0.05]
+ inertia_tensor:
+  - [1, 0, 0, 0, 0, 0]
+  - [0, 1, 0, 0, 0, 0]
+  - [0, 0, 1, 0, 0, 0]
+  - [0, 0, 0, 0.0021, 0, 0]
+  - [0, 0, 0, 0, 0.001, 0]
+  - [0, 0, 0, 0, 0, 0.0027]
+ release:
+  position: [0, 0, 0.2]
+  orientation:
+   - [1, 0, 0]
+   - [0, 1, 0]
+   - [0, 0, 1]
+  linVel: [0, 0, 0]
+  angVel: [3, 1, 0]
+ parameters:
+  mu: 0.5
+  eN: 0.4
+  eT: 0.0
+ discretization: 4
+
+# Surface settings
+surface:
+ - dim: [1, 2]
+   speed: [0, 1, 0]
+   transform:
+    - [0.9962, 0, 0.0872, 0]
+    - [0.0151, 0.9848, -0.1730, 0.5]
+    - [-0.0858, 0.1736, 0.9811, 0]
+    - [0, 0, 0, 1]

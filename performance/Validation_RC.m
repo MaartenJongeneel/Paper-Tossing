@@ -10,9 +10,13 @@ addpath(genpath('readH5')); addpath('data');
 data = readH5('221021_Archive_011_Box005Box006_Validation.h5');
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
-color.Matlab = [237 176 33]/255;
-color.Algoryx = [77 191 237]/255;
-color.Meas = [128 128 128]/255;
+% color.Matlab = [237 176 33]/255;
+% color.Algoryx = [77 191 237]/255;
+% color.Meas = [128 128 128]/255;
+color.Meas = [4 51 83]/255;%[33 67 77]/255;%[85 122 149]/255;%[237 176 33]/255;
+color.Algoryx = [220 217 208]/255;%[77 191 237]/255;
+color.Bullet = [182, 174, 163]/255;%[77 191 237]/255; %[255 0 0]/255;%
+color.Matlab = [0.4 0.4 0.4]; %[128 128 128]/255;
 N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
 MATLAB.Box005.Vel   = [0.35 0.00 0.45]; %eN eT mu
@@ -167,7 +171,7 @@ writeMuJoCoStates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel)
 for is = 1:tel
     %Obtain MATLAB results
     Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
-    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB.(ObjStr).(Param)(1),MATLAB.(ObjStr).(Param)(2),MATLAB.(ObjStr).(Param)(3),Box,Imp_pln(1:3,1:3,is),Imp_pln(1:3,4,is),dt,Ntimeidx);
+    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator_old(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB.(ObjStr).(Param)(1),MATLAB.(ObjStr).(Param)(2),MATLAB.(ObjStr).(Param)(3),Box,Imp_pln(1:3,1:3,is),Imp_pln(1:3,4,is),dt,Ntimeidx);
     for ii = 1:length(MH_B_MATLAB)
         MH_B_Matlab(:,:,ii,is) = MH_B_MATLAB{ii} + [zeros(3) (conv_vel_dir(:,tel)*conv_vel_mag(:,tel))*dt*ii; zeros(1,4)]; %Compensate back the conveyor speed
     end
@@ -216,9 +220,9 @@ figure('rend','painters','pos',[500 500 150 195]);
     ylabel('$(^M\mathbf{o}_B)_y$');
     axis equal
     if ObjStr == "Box005"
-        axis([-0.1 0.6 -0.4 0.6]); 
+        axis([-0.1 0.6 -0.3 0.7]); 
     elseif ObjStr == "Box006"
-        axis([0 0.7 -0.4 0.6]); 
+        axis([0 0.7 -0.3 0.7]); 
     end
     if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
         print(fig,append('figures/RestPose/',ObjStr,'_',Param,'/RunningConveyor/Rest-Pose_',sprintf('%.2d.pdf',ii)),'-dpdf','-vector'); end
@@ -328,9 +332,9 @@ figure('pos',[500 500 500 300]);
     end
 
         %Plot the conveyor C
-        spoints = Imp_pln(1:3,1:3,plotnr)*surfacepoints+Imp_pln(1:3,4,plotnr)-[0.2;0;0]; %Transform the vertices according to position/orientation of the surface
+        spoints = Imp_pln(1:3,1:3,plotnr)*surfacepoints+Imp_pln(1:3,4,plotnr)-[0.2;0;+0.005]; %Transform the vertices according to position/orientation of the surface
         table3 = fill3(spoints(1,1:4),spoints(2,1:4),spoints(3,1:4),1);hold on;
-        set(table3,'FaceColor',[56 53 48]/255,'FaceAlpha',1);
+        set(table3,'FaceColor',[220 220 220]/255,'FaceAlpha',1);
         grid on;axis equal; axis off; camproj('perspective')
         view(-142,30);
         drawnow

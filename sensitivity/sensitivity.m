@@ -13,6 +13,7 @@ th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
 color.Algoryx = [77 191 237]/255;
 color.Meas = [128 128 128]/255;
+color.Bullet = [182, 174, 163]/255;
 N_pos    = 20; %Number of consecutive points where the error is low
 doSave   = false;
 MATLAB.Box005.Traj  = [0.10 0.00 0.45]; %eN eT mu
@@ -26,7 +27,7 @@ Algoryx.Box006.Traj = [0.30 0.00 0.40]; %eN eT mu
 % Algoryx_mu_sigma = 0.143; %Covariance of mu parameter set (not covariance of mean!)
 
 
-ObjStr = "Box006"; %The object for which you want to do paramID
+ObjStr = "Box005"; %The object for which you want to do paramID
 ImpPln = "GroundPlane001";
 Param = "mu";  %Sensitivity of mu or eN 
 
@@ -162,6 +163,8 @@ writecell(params_csv,append('sensitivity/',ObjStr,'_',Param,'/friction_restituti
 %Write initial states file of box and conveyor 
 writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('sensitivity/',ObjStr,'_',Param,'/'));
 
+%% Write the release states to CSV file for PyBullet simulation
+writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('sensitivity/',ObjStr,'_',Param,'/'),'bullet_sens_states');
 %% Matlab simulations for varying params
 Nib = 11;
 if Param == "mu" %If we consider sensitivity of mu, vary mu, keep eN constant
@@ -203,6 +206,26 @@ for toss_nr = 1:length(fnAGX)/Nib %The file contains length(fnAGX) simulation, w
     end
 end
 
+%% Load the multiple (varying params) Bullet simulations
+BULLET_RESULT_FOLDER = append('sensitivity/',ObjStr,'_',Param,'/results_bullet/');
+fn = dir(BULLET_RESULT_FOLDER);
+
+num_state = 100; %We simulate 50 validation states
+num_sim   = 11; %We simulate each state 11 times for varying parameters
+NtimeidxB = 700; %each simulation has 700 time steps
+
+for is = 1:num_state   % loop over all 50 validation states
+    BULLET_RESULT_FILE = append(BULLET_RESULT_FOLDER,fn(is+2).name);
+    bullet_sim_data = table2array(readtable(BULLET_RESULT_FILE));
+    for ip = 1:num_sim % loop over all 11 simulations 
+        cnt = 1;
+        for ib = ((NtimeidxB*(ip-1))+1):((NtimeidxB*(ip))) %loop over all 700 steps of each simulation
+            MH_B_BUL(:,:,cnt,ip) = [quat2rotm([bullet_sim_data(ib,7) bullet_sim_data(ib,4:6)]), bullet_sim_data(ib,1:3)'; zeros(1,3),1];
+            cnt = cnt+1;
+        end
+        MH_B_restB_P(:,:,ip,is) = MH_B_BUL(:,:,end,ip);
+    end
+end
 %% Plot results of the multiple Matlab simulations (varying parameters)
 figure('rend','painters','pos',[500 500 150 195]);
     ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
@@ -281,6 +304,46 @@ figure('rend','painters','pos',[500 500 150 195]);
         print(fig,append('figures/RestPose/sensitivity/',ObjStr,'_',Param,'/AGX/Rest-Pose_',sprintf('%.2d.pdf',toss_nr)),'-dpdf','-vector'); end
 
     pause();
+
+    hold off;
+    end
+%% Plot results of the multiple BULLET simulations (varying parameters)
+figure('rend','painters','pos',[500 500 150 195]);
+    ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
+    axes(ha(1));
+    for toss_nr =1:tel
+    Ptrans = MH_B_rest(:,:,toss_nr)*[Box.vertices.ds';ones(1,8)];
+    PtransM = MH_B_restB_P(:,:,6,toss_nr)*[Box.vertices.ds';ones(1,8)]; %6th is the mean
+    x1 = [Ptrans(1,1:4) Ptrans(1,1)];
+    y1 = [Ptrans(2,1:4) Ptrans(2,1)];
+    x2 = [PtransM(1,1:4) PtransM(1,1)];
+    y2 = [PtransM(2,1:4) PtransM(2,1)];
+
+    %Plot result from the experiments
+    fill(x1,y1,color.Meas); %Measured box  
+    axis equal; axis([-0.3 1 -0.7 0.3]); grid on; hold on
+    fill(x2,y2,color.Matlab);      %Matlab box
+
+    %Plot the result from the sampled simulations
+    for ib = 1:Nib
+    PtransM(:,:,ib) = MH_B_restB_P(:,:,ib,toss_nr)*[Box.vertices.ds';ones(1,8)];
+    x2 = [PtransM(1,1:4,ib) PtransM(1,1,ib)];
+    y2 = [PtransM(2,1:4,ib) PtransM(2,1,ib)];
+
+    h = fill(x2,y2,color.Bullet); %Matlab box
+    h.FaceAlpha = 0.1;
+    h.EdgeColor = [0 0 0];
+    h.EdgeAlpha = 0.4;    
+    end
+
+    xlabel('$(^Mo_B)_x$');
+    ylabel('$(^Mo_B)_y$');
+%     legend('Measured','Matlab');
+    axis([-0.1 0.6 -0.1 0.9]); 
+    if doSave; fig = gcf; fig.PaperPositionMode = 'auto'; fig_pos = fig.PaperPosition; fig.PaperSize = [fig_pos(3) fig_pos(4)];
+        print(fig,append('figures/RestPose/sensitivity/',ObjStr,'_',Param,'/Bullet/Rest-Pose_',sprintf('%.2d.pdf',toss_nr)),'-dpdf','-vector'); end
+
+%     pause();
 
     hold off;
     end

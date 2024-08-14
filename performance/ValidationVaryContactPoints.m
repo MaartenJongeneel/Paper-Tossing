@@ -6,10 +6,6 @@ addpath(genpath('readH5')); addpath('data');
 %really the case for the automatic tosses by the robot arm, which might
 %have been from too much height. In the performed experiments, box5 is
 %tossed manually on an idle conveyor.
-%% Load the data
-% data = readH5('221021_Archive_011_Box005Box006_Validation.h5');
-data = readH5('230104_Archive_018_Box004_Validation.h5');
-% data = readH5('230104_Archive_020_Box007_Validation.h5');
 %% Constants
 th_Rmean = 1e-5; %Threshold rotation mean
 color.Matlab = [237 176 33]/255;
@@ -22,13 +18,26 @@ MATLAB.Box004.Traj  = [0.00 0.00 0.45]; %eN eT mu [0.05 0.00 0.45]; %eN eT mu
 MATLAB.Box005.Vel   = [0.35 0.00 0.45]; %eN eT mu
 MATLAB.Box005.Traj  = [0.00 0.00 0.45]; %eN eT mu [0.10 0.00 0.45]; %eN eT mu
 MATLAB.Box006.Vel   = [0.40 0.00 0.25]; %eN eT mu 
-MATLAB.Box006.Traj  = [0.00 0.00 0.40]; %eN eT mu [0.25 0.00 0.40]; %eN eT mu
+MATLAB.Box006.Traj  = [0.25 0.00 0.40]; %eN eT mu [0.25 0.00 0.40]; %eN eT mu
 MATLAB.Box007.Vel   = [0.60 0.00 0.40];
 MATLAB.Box007.Traj  = [0.00 0.00 0.35]; %eN eT mu [0.45 0.00 0.35];
 
-ObjStr = "Box004"; %The object for which you want to do paramID
-ImpPln = "ConveyorPart002"; %"GroundPlane001";
+ObjStr = "Box006"; %The object for which you want to do paramID
 Param = "Traj";  %Vel or Traj based parameters are tested 
+
+if ObjStr == "Box006"
+    ImpPln = "ConveyorPart006";
+    data = readH5('221021_Archive_011_Box005Box006_Validation.h5');
+elseif ObjStr == "Box004"
+    ImpPln = "ConveyorPart002";
+    data = readH5('230104_Archive_018_Box004_Validation.h5');
+elseif ObjStr == "Box007"
+    ImPln = "ConveyorPart002";
+    data = readH5('230104_Archive_020_Box007_Validation.h5');
+end
+
+
+
 %% Loop through the data
 tel = 0;
 fn = fieldnames(data);
@@ -95,7 +104,7 @@ for ii = 1:length(fn)
             [pks,id_rel] = findpeaks(Mo_B(3,:,tel),'MinPeakHeight',0.12);%,'MinPeakProminence',0.05,'MinPeakWidth',10);
             id_rel = id_rel(end);
         elseif ObjStr == "Box006"
-            if isempty(id_rest); id_rest = 700; end %If due to noise we cannot get the rest index 
+%             if isempty(id_rest); id_rest = 700; end %If due to noise we cannot get the rest index 
             [pks,id_rel] = findpeaks(Mo_B(3,100:end,tel),'MinPeakHeight',0.08,'MinPeakWidth',10);
             id_rel = id_rel+99;            
             id_rel = id_rel(1);
@@ -115,12 +124,12 @@ for ii = 1:length(fn)
         id_rest = t(f(2*g-1))+id_rel-1; % First t followed by >=N_pos consecutive numbers
         if isempty(id_rest); id_rest = 700; end
 
-            figure; plot(Mo_B(3,:,tel)); hold on;
-                plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
-                plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
-                grid on;
-                pause
-                close all
+%             figure; plot(Mo_B(3,:,tel)); hold on;
+%                 plot(id_rel,Mo_B(3,id_rel,tel),'o','markersize',10,'linewidth',2);
+%                 plot(id_rest,Mo_B(3,id_rest,tel),'o','markersize',10,'linewidth',2);
+%                 grid on;
+%                 pause
+%                 close all
         
         %------------- Determine the relative release-pose --------------%
         Mo_B_rel(:,tel) = Mo_B(:,id_rel,tel);
@@ -156,13 +165,13 @@ for ii = 1:length(fn)
 end
 
 %% Write the release states to CSV file for Algoryx simulation
-writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('performance/',ObjStr,'_',Param,'/'));
+% writeAGXinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('performance/',ObjStr,'_',Param,'/'));
 
 %% Write the release states to CSV file for MuJoCo simulation
-writeMuJoCoStates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel)
+% writeMuJoCoStates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel)
 
 %% Write the release states to CSV file for PyBullet simulation
-writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('PyBulletSim/simstates/',ObjStr,'_',Param,'/'),'validation_states');
+% writeBULLETinitstates(MH_B_rel(1:3,1:3,:),MH_B_rel(1:3,4,:),BV_MB_rel(1:3,:),BV_MB_rel(4:6,:),repmat(eye(3),1,1,length(BV_MB_rel(1,:))),zeros(3,1,length(BV_MB_rel(1,:))),append('PyBulletSim/simstates/',ObjStr,'_',Param,'/'),'validation_states');
 
 %% Plot figure to demonstrate the release and rest determination
 close all
@@ -197,14 +206,66 @@ axes(ha(1));
     end
 
 %% Do the Matlab simulations of propagating the mean
-for is = 1:tel
+clear x
+for is = 1:10 %tel
     %Obtain MATLAB results
     Ntimeidx = id(is,2)-id(is,1)+1; %Number of discrete time indices we want to run the simulation
-    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB.(ObjStr).(Param)(1),MATLAB.(ObjStr).(Param)(2),MATLAB.(ObjStr).(Param)(3),Box,eye(3),zeros(3,1),dt,Ntimeidx);
+    x.releasePosition = MH_B_rel(1:3,4,is);
+    x.releaseOrientation = MH_B_rel(1:3,1:3,is);
+    x.releaseLinVel = BV_MB_rel(1:3,is);
+    x.releaseAngVel = BV_MB_rel(4:6,is);
+    c.eN = MATLAB.(ObjStr).(Param)(1);
+    c.eT = MATLAB.(ObjStr).(Param)(2);
+    c.mu = MATLAB.(ObjStr).(Param)(3);
+    c.dt = dt;
+    c.endtime = dt*Ntimeidx;
+    c.a = 1e-3;
+    c.tol = 1e-5;
+    c.dimd = 16;
+    box.B_M_B = Box.inertia.ds;
+    box.mass = Box.mass.ds;
+    box.vertices = Box.vertices.ds';
+    box.dimensions = Box.dimensions.ds;
+    surface{1}.dim = [2,2];
+    surface{1}.speed = [0; 0; 0];
+    surface{1}.transform = eye(4);
+
+    %Discretize the box dimensions
+    scale=1; %Between [0 1]
+    [X,Y,Z]=meshgrid(linspace(-box.dimensions(1)/2,box.dimensions(1)/2,2),linspace(-box.dimensions(2)/2,box.dimensions(2)/2,2),linspace(-box.dimensions(3)/2,box.dimensions(3)/2,2));
+    vertices= [X(:)';Y(:)';Z(:)'];
+    xpoints = [X(:)';scale*Y(:)';scale*Z(:)'];
+    ypoints = [scale*X(:)';Y(:)';scale*Z(:)'];
+    zpoints = [scale*X(:)';scale*Y(:)';Z(:)'];
+    
+    box.vertices = [vertices xpoints ypoints zpoints];
+
+    [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(x,c,box,surface);
+
+    scale=1; %Between [0 1]
+    [X,Y,Z]=meshgrid(linspace(-box.dimensions(1)/2,box.dimensions(1)/2,2),linspace(-box.dimensions(2)/2,box.dimensions(2)/2,2),linspace(-box.dimensions(3)/2,box.dimensions(3)/2,2));
+    vertices= [X(:)';Y(:)';Z(:)'];
+    xpoints = [X(:)';scale*Y(:)';scale*Z(:)'];
+    ypoints = [scale*X(:)';Y(:)';scale*Z(:)'];
+    zpoints = [scale*X(:)';scale*Y(:)';Z(:)'];
+    
+    box.vertices = [vertices xpoints ypoints zpoints];
+
+%     [MH_B_MATLABLCP,BV_MB_MATLAB] = BoxSimulator(x,c,box,surface);
+
+%     Ndisc=2;
+%     [X,Y,Z]=meshgrid(linspace(-box.dimensions(1)/2,box.dimensions(1)/2,Ndisc),linspace(-box.dimensions(2)/2,box.dimensions(2)/2,Ndisc),linspace(-box.dimensions(3)/2,box.dimensions(3)/2,Ndisc));
+%     pbool = (abs(X(:))==box.dimensions(1)/2) | (abs(Y(:))==box.dimensions(2)/2) | (abs(Z(:))==box.dimensions(3)/2);
+%     box.vertices= [X(pbool)';Y(pbool)';Z(pbool)'];
+%      [MH_B_MATLABLCP,BV_MB_MATLAB] = BoxSimulator(x,c,box,surface);
+    [MH_B_MATLABLCP,BV_MB_MATLAB] = BoxSimulatorLCPNEW(x,c,box,surface);
+%     [MH_B_MATLAB,BV_MB_MATLAB] = BoxSimulator(MH_B_rel(1:3,4,is),MH_B_rel(1:3,1:3,is),BV_MB_rel(1:3,is),BV_MB_rel(4:6,is),MATLAB.(ObjStr).(Param)(1),MATLAB.(ObjStr).(Param)(2),MATLAB.(ObjStr).(Param)(3),Box,eye(3),zeros(3,1),dt,Ntimeidx);
     for ii = 1:length(MH_B_MATLAB)
-    MH_B_Matlab(:,:,ii,is) = MH_B_MATLAB{ii};
+    MH_B_Matlab(:,:,ii,is) = MH_B_MATLAB(:,:,ii);
+    MH_B_MatlabLCP(:,:,ii,is) = MH_B_MATLABLCP(:,:,ii);
     end
-    MH_B_restM(:,:,is) = MH_B_MATLAB{end};
+    MH_B_restM(:,:,is) = MH_B_MATLAB(:,:,end);
+    MH_B_restLCP(:,:,is) = MH_B_MATLABLCP(:,:,end);
 end
 
 %% Load the single AGX simulations
@@ -227,10 +288,9 @@ for ia = 1:length(fnAGX)
 end
 
 %% Load the single BULLET simulations
-% BULLET_RESULT_FILE = append('PyBulletSim/simstates/',ObjStr,'_',Param,'/sim_results/validation/validation_results.csv');
-BULLET_RESULT_FILE = append('PyBulletSim/simstates/',ObjStr,'_',Param,'/sim_results_eN0/validation_results.csv');
+BULLET_RESULT_FILE = append('PyBulletSim/simstates/',ObjStr,'_',Param,'/sim_results/validation/validation_results.csv');
 bullet_sim_data = table2array(readtable(BULLET_RESULT_FILE));
-num_sim = 50; %We simulate 50 validation states
+num_sim = 100; %We simulate 50 validation states
 NtimeidxB = 700; %each simulation has 700 time steps
 for ip = 1:num_sim % loop over all 50 simulations states
     cnt = 1;
@@ -245,37 +305,37 @@ end
 figure('rend','painters','pos',[500 500 150 195]);
     ha = tight_subplot(1,1,[.08 .07],[.16 .02],[0.21 0.05]);  %[gap_h gap_w] [lower upper] [left right]
     axes(ha(1));
-    for ii =[1 12 25]; %1:tel
+    for ii = 1:tel; %[1 12 25]; %1:tel
     Ptrans = MH_B_rest(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     PtransM = MH_B_restM(:,:,ii)*[Box.vertices.ds';ones(1,8)];
-    PtransA = MH_B_restAGX(:,:,ii)*[Box.vertices.ds';ones(1,8)];
-    PtransB = MH_B_restB(:,:,ii)*[Box.vertices.ds';ones(1,8)];
+%     PtransA = MH_B_restAGX(:,:,ii)*[Box.vertices.ds';ones(1,8)];
+%     PtransB = MH_B_restB(:,:,ii)*[Box.vertices.ds';ones(1,8)];
     if ObjStr == "Box004"
         x1 = [Ptrans(1,1:2) Ptrans(1,6) Ptrans(1,5) Ptrans(1,1)];
         y1 = [Ptrans(2,1:2) Ptrans(2,6) Ptrans(2,5) Ptrans(2,1)];
         x2 = [PtransM(1,1:2) PtransM(1,6) PtransM(1,5) PtransM(1,1)]; 
         y2 = [PtransM(2,1:2) PtransM(2,6) PtransM(2,5) PtransM(2,1)]; 
-        x3 = [PtransA(1,1:2) PtransA(1,6) PtransA(1,5) PtransA(1,1)]; 
-        y3 = [PtransA(2,1:2) PtransA(2,6) PtransA(2,5) PtransA(2,1)]; 
-        x4 = [PtransB(1,1:2) PtransB(1,6) PtransB(1,5) PtransB(1,1)]; 
-        y4 = [PtransB(2,1:2) PtransB(2,6) PtransB(2,5) PtransB(2,1)]; 
+%         x3 = [PtransA(1,1:2) PtransA(1,6) PtransA(1,5) PtransA(1,1)]; 
+%         y3 = [PtransA(2,1:2) PtransA(2,6) PtransA(2,5) PtransA(2,1)]; 
+%         x4 = [PtransB(1,1:2) PtransB(1,6) PtransB(1,5) PtransB(1,1)]; 
+%         y4 = [PtransB(2,1:2) PtransB(2,6) PtransB(2,5) PtransB(2,1)]; 
     else
         x1 = [Ptrans(1,1:4) Ptrans(1,1)];
         y1 = [Ptrans(2,1:4) Ptrans(2,1)];
         x2 = [PtransM(1,1:4) PtransM(1,1)]; 
         y2 = [PtransM(2,1:4) PtransM(2,1)]; 
-        x3 = [PtransA(1,1:4) PtransA(1,1)]; 
-        y3 = [PtransA(2,1:4) PtransA(2,1)]; 
-        x4 = [PtransB(1,1:4) PtransB(1,1)]; 
-        y4 = [PtransB(2,1:4) PtransB(2,1)]; 
+%         x3 = [PtransA(1,1:4) PtransA(1,1)]; 
+%         y3 = [PtransA(2,1:4) PtransA(2,1)]; 
+%         x4 = [PtransB(1,1:4) PtransB(1,1)]; 
+%         y4 = [PtransB(2,1:4) PtransB(2,1)]; 
     end
 
     
     fill(x1,y1,color.Meas); %Measured box 
     grid on; hold on;
     fill(x2,y2,color.Matlab);  %Matlab box
-    fill(x3,y3,color.Algoryx); %AGX box
-    fill(x4,y4,[1 0 0]);       %BULLET box
+%     fill(x3,y3,color.Algoryx); %AGX box
+%     fill(x4,y4,[1 0 0]);       %BULLET box
     xlabel('$(^M\mathbf{o}_B)_x$');
     ylabel('$(^M\mathbf{o}_B)_y$');
     axis equal
@@ -289,16 +349,17 @@ figure('rend','painters','pos',[500 500 150 195]);
 
 %% Compute the errors of the rest-orientation and rest-position
 teller = 1;
-for ii =1:tel
+for ii =1:length(MH_B_restM)
     if ObjStr == "Box004" %We need to remove some things here..
         if ii==42; continue; end;    if ii==28; continue; end
     end    
     E_rot_M(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restM(1:3,1:3,ii)));
-    E_rot_A(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX(1:3,1:3,ii)));
-    E_rot_B(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restB(1:3,1:3,ii)));
+    E_rot_LCP(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restLCP(1:3,1:3,ii)));
+%     E_rot_A(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restAGX(1:3,1:3,ii)));
+%     E_rot_B(teller,:) = rad2deg(rotm2eul(MH_B_rest(1:3,1:3,ii)\MH_B_restB(1:3,1:3,ii)));
     E_pos_M(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restM(1:3,4,ii))';
-    E_pos_A(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
-    E_pos_B(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restB(1:3,4,ii))';
+%     E_pos_A(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restAGX(1:3,4,ii))';
+%     E_pos_B(teller,:) = (MH_B_rest(1:3,4,ii)-MH_B_restB(1:3,4,ii))';
     teller = teller+1;
 end
 col=1;
@@ -307,18 +368,15 @@ e_pos_M = mean(vecnorm(E_pos_M(:,1:2)'));
 std_pos_M = std(vecnorm(E_pos_M(:,1:2)'));
 e_rot_M = mean(abs(E_rot_M(:,col)));
 std_rot_M = std(abs(E_rot_M(:,col)));
-e_pos_A = mean(vecnorm(E_pos_A(:,1:2)'));
-std_pos_A = std(vecnorm(E_pos_A(:,1:2)'));
-e_rot_A = mean(abs(E_rot_A(:,col)));
-std_rot_A = std(abs(E_rot_A(:,col)));
-e_pos_B = mean(vecnorm(E_pos_B(:,1:2)'));
-std_pos_B = std(vecnorm(E_pos_B(:,1:2)'));
-e_rot_B = mean(abs(E_rot_B(:,col)));
-std_rot_B = std(abs(E_rot_B(:,col)));
+% e_pos_A = mean(vecnorm(E_pos_A(:,1:2)'));
+% std_pos_A = std(vecnorm(E_pos_A(:,1:2)'));
+% e_rot_A = mean(abs(E_rot_A(:,col)));
+% std_rot_A = std(abs(E_rot_A(:,col)));
+% e_pos_B = mean(vecnorm(E_pos_B(:,1:2)'));
+% std_pos_B = std(vecnorm(E_pos_B(:,1:2)'));
+% e_rot_B = mean(abs(E_rot_B(:,col)));
+% std_rot_B = std(abs(E_rot_B(:,col)));
 
-T= table([e_pos_M; e_pos_A; e_pos_B]*100, [std_pos_M; std_pos_A; std_pos_B]*100, [e_rot_M;e_rot_A;e_rot_B], [std_rot_M;std_rot_A;std_rot_B], ...
-    'VariableNames',{'pos [cm]','std pos [cm] ','rot [deg]','std rot[deg]'},'RowNames',{'Traj. based param. MATLAB','Traj. based param. Algoryx','Traj. based param. Bullet'});
-disp(T)
 %% Plot single trajectory in space to demonstrate simulation
 % Plotting options For plotting the contact surface
 ws    = 1.5;  %Width of the contact surface             [m]
@@ -328,9 +386,9 @@ FR_C = eye(3);
 Fo_C = zeros(3,1);
 spoints = FR_C*surfacepoints +Fo_C; %Transform the vertices according to position/orientation of the surface
 
-plotnr = 43;
+plotnr = 4;
 %Plot the trajectory of the box
-figure('pos',[500 500 500 300]);
+figure('pos',[0 0 1500 1000]);
     for ii=id(plotnr,1):5:id(plotnr,2)-1
         
         %plot Measured box
@@ -338,6 +396,9 @@ figure('pos',[500 500 500 300]);
         
         %Plot MATLAB box
         g2 = plotBox(MH_B_Matlab(:,:,ii-(id(plotnr,1)-1),plotnr),Box,color.Matlab,0); hold on;     
+
+        %Plot MATLAB box LCP
+        g3 = plotBox(MH_B_MatlabLCP(:,:,ii-(id(plotnr,1)-1),plotnr),Box,[1 0 0],0); hold on; 
 
         %Plot new AGX box results
         if ObjStr == "Box005"
@@ -368,7 +429,7 @@ figure('pos',[500 500 500 300]);
         ylabel('y [m]');
         zlabel('z [m]');
 %         view(-118,16);
-        view(81,16);
+        view(-177,26);
 %         view(-315,31);
 %         view(-90,0);
 %         text(1,0.6,0.4,append('Frame:',sprintf('%d',ii-(id(plotnr,1)-1))));
@@ -376,7 +437,7 @@ figure('pos',[500 500 500 300]);
 %         L1.Position(2) = 0.90;
 %         L1.Position(1) = 0.52-(L1.Position(3)/2);
         drawnow
-        hold off
+%         hold off
 %         pause()        
 %         f = gcf;
 %         exportgraphics(f,append('Frame_',sprintf('%.2d.jpg',ii-(id(plotnr,1)-1))),'Resolution',500)
